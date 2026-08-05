@@ -205,46 +205,59 @@ export default function WeeklyScheduleImporter() {
   // Helper to parse cell content intelligently
   const parseCellText = (text: string) => {
     if (!text) return null;
-    let lines = String(text).split('\n').map(l => l.trim()).filter(Boolean);
-    
-    // Filter out URLs and website noise
-    lines = lines.filter(line => !isNoiseText(line));
-    
-    if (lines.length === 0) return null;
+    let rawStr = String(text);
+    if (isNoiseText(rawStr)) return null;
 
     let type = 'Présentielle';
     let salle = 'N/A';
     let groupe = '';
 
-    lines.forEach(line => {
-      const upperLine = line.toUpperCase();
-      if (upperLine.includes('PRÉSENTIELLE') || upperLine.includes('PRESENTIELLE') || upperLine === 'PRES' || upperLine === 'PRESEN') {
-        type = 'Présentielle';
-      } else if (upperLine.includes('TEAMS') || upperLine.includes('DISTANC') || upperLine.includes('EN LIGNE')) {
-        type = 'Teams';
-      } else if (upperLine.includes('EFM') || upperLine.includes('EXAMEN') || upperLine.includes('CONTRÔLE') || upperLine === 'DEV') {
-        type = 'EFM';
-      } else if (/^S\d+/i.test(line) || upperLine.startsWith('SALLE') || upperLine.startsWith('LABO')) {
-        salle = line;
-      } else {
-        if (!groupe) {
-          groupe = line;
-        } else {
-          groupe += ' ' + line;
+    // 1. Extract Type
+    if (/teams|à distance|a distance|en ligne|distanciel/i.test(rawStr)) {
+      type = 'Teams';
+    } else if (/efm|examen|contrôle|controle/i.test(rawStr)) {
+      type = 'EFM';
+    } else if (/présentielle|presentielle|presen|pres/i.test(rawStr)) {
+      type = 'Présentielle';
+    }
+    
+    // Remove type keywords to not confuse group/salle
+    rawStr = rawStr.replace(/teams|à distance|a distance|en ligne|distanciel|efm|examen|contrôle|controle|présentielle|presentielle|presen\b|pres\b/ig, '');
+
+    // Remove stray header words from PDF parsing
+    rawStr = rawStr.replace(/lundi|mardi|mercredi|jeudi|vendredi|samedi/ig, '');
+    rawStr = rawStr.replace(/matin|a\.midi|amidi|midi/ig, '');
+    rawStr = rawStr.replace(/se[1-4]\b/ig, '');
+    rawStr = rawStr.replace(/\d{2}:\d{2}\s*[\-\=]\s*\d{2}:\d{2}/ig, ''); // e.g. 08:30 - 11:10
+    rawStr = rawStr.replace(/\d{2}:\d{2}/ig, ''); // single times
+    rawStr = rawStr.replace(/=\s*/g, ''); // stray equals signs
+
+    // 2. Extract Salle
+    // Matches S12, Salle 14, Labo 3, Amphi A, etc.
+    const salleRegex = /(?:SALLE|LABO|AMPHI|ATELIER)[\s\-\.]*[A-Z0-9]+|\b[SCL][\.\-\s]?\d{1,3}\b/i;
+    const salleMatch = rawStr.match(salleRegex);
+    
+    if (salleMatch) {
+      salle = salleMatch[0].trim();
+      rawStr = rawStr.replace(salleMatch[0], '');
+    } else {
+      // Fallback: If there's a pure number on its own line, it's likely the room.
+      const lines = rawStr.split('\n').map(l => l.trim()).filter(Boolean);
+      for (let i = 0; i < lines.length; i++) {
+        if (/^\d{2,3}$/.test(lines[i])) {
+          salle = lines[i];
+          rawStr = rawStr.replace(lines[i], '');
+          break;
         }
       }
-    });
-
-    if (!groupe && lines.length > 0) {
-      const lastLine = lines[lines.length - 1];
-      const upperLast = lastLine.toUpperCase();
-      const isType = upperLast.includes('PRESENTIELLE') || upperLast.includes('PRÉSENTIELLE') || upperLast.includes('TEAMS') || upperLast.includes('DISTANC') || upperLast.includes('EFM');
-      const isSalle = /^S\d+/i.test(lastLine) || upperLast.startsWith('SALLE') || upperLast.startsWith('LABO');
-      
-      if (!isType && !isSalle) {
-        groupe = lastLine;
-      }
     }
+
+    // 3. Extract Groupe (whatever is left)
+    groupe = rawStr.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+    // Remove leading punctuation if any
+    groupe = groupe.replace(/^[\-\:]\s*/, '').trim();
+
+    if (!groupe) return null;
 
     return { type, salle, groupe };
   };
@@ -560,36 +573,39 @@ export default function WeeklyScheduleImporter() {
             }
           });
 
-          // Sort lines from top to bottom, and sort items in each line from left to right
-          const sortedYKeys = Array.from(linesMap.keys()).sort((a, b) => b - a);
-          const lines = sortedYKeys.map(y => {
-            return linesMap.get(y)!.sort((a, b) => a.x - b.x);
-          });
-
-          // Group lines into Teacher Blocks
+          // Group into Teacher Blocks using nearest Y-coordinate
           interface TeacherBlock {
             name: string;
+            y: number;
             items: any[];
           }
           const teacherBlocks: TeacherBlock[] = [];
-          let currentBlock: TeacherBlock | null = null;
 
-          lines.forEach((line) => {
-            if (line.length === 0) return;
-            const firstItem = line[0];
+          // 1. Find all teachers on the far left first
+          items.forEach((item: any) => {
+            const isAtLeft = item.x < minX - 15;
+            if (isAtLeft && isTeacherName(item.str)) {
+              teacherBlocks.push({ name: item.str, y: item.y, items: [] });
+            }
+          });
 
-            const isAtLeft = firstItem.x < minX - 15;
-            const isRealTeacher = isTeacherName(firstItem.str);
-
-            if (isAtLeft && isRealTeacher) {
-              currentBlock = {
-                name: firstItem.str,
-                items: line.slice(1)
-              };
-              teacherBlocks.push(currentBlock);
-            } else if (currentBlock) {
-              const gridItems = line.filter(it => it.x >= minX - 10);
-              currentBlock.items.push(...gridItems);
+          // 2. Assign every grid item to the nearest teacher by Y-coordinate
+          items.forEach((item: any) => {
+            if (item.x >= minX - 10 && teacherBlocks.length > 0) {
+              let bestBlock = teacherBlocks[0];
+              let minDiff = Math.abs(teacherBlocks[0].y - item.y);
+              
+              for (let i = 1; i < teacherBlocks.length; i++) {
+                const diff = Math.abs(teacherBlocks[i].y - item.y);
+                if (diff < minDiff) {
+                  minDiff = diff;
+                  bestBlock = teacherBlocks[i];
+                }
+              }
+              // Only assign if it is physically close to the teacher row (ignores headers/footers)
+              if (minDiff < 35) {
+                bestBlock.items.push(item);
+              }
             }
           });
 
@@ -945,7 +961,11 @@ export default function WeeklyScheduleImporter() {
                             </span>
                           </td>
                           <td className="py-3 fw-bold text-primary">{session.groupe}</td>
-                          <td className={`py-3 fw-semibold ${themeTextClass}`}>{session.salle}</td>
+                          <td className="py-3">
+                            <span className="badge rounded-pill bg-light text-secondary border px-2.5 py-1 fw-bold">
+                              {session.salle || 'N/A'}
+                            </span>
+                          </td>
                           <td className="py-3">
                             <span 
                               className="badge rounded-pill px-3 py-2 fw-bold"
@@ -1108,7 +1128,11 @@ export default function WeeklyScheduleImporter() {
                                   </span>
                                 </td>
                                 <td className="py-2 fw-bold text-primary">{session.groupe}</td>
-                                <td className="py-2 fw-semibold text-muted">{session.salle}</td>
+                                <td className="py-2">
+                                  <span className="badge rounded-pill bg-light text-secondary border px-2 py-0.5 fw-bold" style={{ fontSize: '0.75rem' }}>
+                                    {session.salle || 'N/A'}
+                                  </span>
+                                </td>
                                 <td className="py-2">
                                   <span 
                                     className="badge rounded-pill px-2.5 py-1 fw-bold"

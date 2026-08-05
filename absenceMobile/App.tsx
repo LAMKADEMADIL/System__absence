@@ -3,12 +3,21 @@ import './src/i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-import * as Notifications from 'expo-notifications';
+// import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { registerForPushNotificationsAsync } from './src/utils/notifications';
 import { auth, db } from './src/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
+
+// MOCKED Notifications
+const Notifications = {
+  setNotificationHandler: () => {},
+  setNotificationChannelAsync: async () => {},
+  AndroidImportance: { MAX: 5 },
+  addNotificationReceivedListener: () => ({ remove: () => {} }),
+  addNotificationResponseReceivedListener: () => ({ remove: () => {} }),
+} as any;
 
 // Configure notifications
 Notifications.setNotificationHandler({

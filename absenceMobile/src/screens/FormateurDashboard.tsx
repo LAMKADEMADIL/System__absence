@@ -317,7 +317,10 @@ export default function FormateurDashboard({ navigation }: any) {
         
         // Filter today's list strictly matching the actual current week range
         const todayDayName = dateInfo.dayName;
-        const todayList = list.filter(item => item.semaine === currentWeek && item.jour.trim().toUpperCase() === todayDayName.trim().toUpperCase());
+        const todayList = list.filter(item => {
+          const itemSemaine = item.semaine ? item.semaine.replace(/\//g, '-') : '';
+          return itemSemaine === currentWeek && item.jour.trim().toUpperCase() === todayDayName.trim().toUpperCase();
+        });
         
         todayList.sort((a, b) => a.slot.localeCompare(b.slot));
         setMyTodaySchedule(groupScheduleItems(todayList));
@@ -1165,7 +1168,10 @@ export default function FormateurDashboard({ navigation }: any) {
           <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 50 }}>
             {['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].map(day => {
               const activeWeek = selectedWeekTab === 'current' ? currentWeekRange : getNextWeekRange();
-              const daySessions = myWeeklySchedule.filter(item => item.semaine === activeWeek && item.jour.trim().toUpperCase() === day.trim().toUpperCase());
+              const daySessions = myWeeklySchedule.filter(item => {
+                const itemSemaine = item.semaine ? item.semaine.replace(/\//g, '-') : '';
+                return itemSemaine === activeWeek && item.jour.trim().toUpperCase() === day.trim().toUpperCase();
+              });
               // Sort by slot
               daySessions.sort((a, b) => a.slot.localeCompare(b.slot));
               const groupedDaySessions = groupScheduleItems(daySessions);
