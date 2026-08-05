@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Realistic Phone Simulator - OFPPT</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #2c3e50 0%, #000000 100%);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: white;
+        }
+
+        /* The Phone Container */
+        .marvel-device {
+            display: inline-block;
+            position: relative;
+            box-sizing: content-box !important;
+            width: 375px;
+            height: 812px;
+            padding: 26px;
+            background: #111;
+            border-radius: 68px;
+            box-shadow: inset 0 0 3px 2px #444, 0 50px 100px -20px rgba(0,0,0,0.5);
+        }
+
+        /* Inner Frame */
+        .marvel-device .inner-side {
+            width: 100%;
+            height: 100%;
+            background: #000;
+            border-radius: 56px;
+            position: relative;
+            overflow: hidden;
+            border: 2px solid #222;
+        }
+
+        /* Screen */
+        .marvel-device .screen {
+            width: 100%;
+            height: 100%;
+            background: #fff;
+            border-radius: 40px;
+            overflow: hidden;
+            position: relative;
+            z-index: 1;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Notch (Dynamic Island Style) */
+        .notch {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 35px;
+            background: #000;
+            border-radius: 20px;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .camera {
+            width: 10px;
+            height: 10px;
+            background: #111;
+            border-radius: 50%;
+            margin-left: 60px;
+            box-shadow: inset 0 0 2px #444;
+        }
+
+        /* Side Buttons */
+        .btn-side {
+            position: absolute;
+            background: #222;
+            border-radius: 2px;
+        }
+
+        .btn-power { width: 3px; height: 80px; right: -2px; top: 180px; }
+        .btn-vol-up { width: 3px; height: 50px; left: -2px; top: 160px; }
+        .btn-vol-down { width: 3px; height: 50px; left: -2px; top: 220px; }
+        .btn-silent { width: 3px; height: 30px; left: -2px; top: 110px; }
+
+        /* Reflections */
+        .reflection {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .controls {
+            position: fixed;
+            bottom: 40px;
+            text-align: center;
+            z-index: 20;
+        }
+
+        .refresh-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+
+        h2 { font-weight: 300; letter-spacing: 2px; margin-bottom: 5px; opacity: 0.8; }
+    </style>
+</head>
+<body>
+
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <h2>VIRTUAL DEVICE</h2>
+        
+        <div class="marvel-device">
+            <div class="btn-side btn-silent"></div>
+            <div class="btn-side btn-vol-up"></div>
+            <div class="btn-side btn-vol-down"></div>
+            <div class="btn-side btn-power"></div>
+            
+            <div class="inner-side">
+                <div class="notch">
+                    <div class="camera"></div>
+                </div>
+                <div class="reflection"></div>
+                <div class="screen">
+                    <iframe id="app-frame" src="http://localhost:8081"></iframe>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="refresh-btn" onclick="document.getElementById('app-frame').src += ''">
+                🔄 Recharger l'écran
+            </button>
+        </div>
+    </div>
+
+</body>
+</html>

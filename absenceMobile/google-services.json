@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "289643777341",
+    "project_id": "ista-absence",
+    "storage_bucket": "ista-absence.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:289643777341:android:9ddf5c4ded4f8cdb094954",
+        "android_client_info": {
+          "package_name": "com.adill.absence"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDU095KAUVyqDy-zjboM_ccAiNUNyC_wj4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

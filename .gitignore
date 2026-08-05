@@ -1,0 +1,20 @@
+node_modules/
+.expo/
+dist/
+build/
+*.log
+.env
+.env.*
+.DS_Store
+*.pem
+*.key
+serviceAccountKey.json
+ista-absence-firebase-adminsdk-fbsvc-ba157a4284.json
+release/
+.erb/dll
+.erb/build
+
+# Firebase Configs (Secrets) - DONT UPLOAD THESE
+absenceDesktop/src/renderer/firebase/firebaseConfig.ts
+absenceMobile/src/firebaseConfig.ts
+absenceDesktop/firebaseConfig.js

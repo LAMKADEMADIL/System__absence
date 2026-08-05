@@ -1,0 +1,74 @@
+
+    <html>
+      <head>
+        <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+          body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+          }
+          .logo {
+            width: 220px;
+            height: auto;
+            animation: pulse 2s infinite ease-in-out;
+          }
+          .title {
+            color: #0f172a;
+            font-size: 36px;
+            font-weight: 900;
+            margin-top: 30px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+          }
+          .subtitle {
+            color: #2563eb;
+            font-size: 18px;
+            font-weight: 800;
+            margin-top: 15px;
+            letter-spacing: 6px;
+            opacity: 0.8;
+          }
+          .dev-container {
+            position: absolute;
+            bottom: 60px;
+            text-align: center;
+          }
+          .dev-text {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+            letter-spacing: 2px;
+          }
+          .dev-name {
+            color: #1e293b;
+            font-weight: 900;
+            font-size: 18px;
+            display: block;
+            margin-top: 6px;
+          }
+          @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.9; }
+          }
+        </style>
+      </head>
+      <body>
+        <img src="../renderer/assets/Logo_ofppt.png" class="logo" id="logo" />
+        <h1 class="title">Système Absence</h1>
+        <div class="subtitle">ISTA Tertiaire My Rachid</div>
+        
+        <div class="dev-container">
+          <div class="dev-text">DÉVELOPPÉ PAR</div>
+          <div class="dev-name">ADIL LAMKADEM</div>
+        </div>
+      </body>
+    </html>

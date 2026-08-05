@@ -1,0 +1,90 @@
+﻿Starting project at C:\Users\adill\Desktop\system_absence\absenceMobile
+Starting Metro Bundler
+
+Tunnel connected.
+Tunnel ready.
+node.exe : The following packages should be updated for best compatibility with the installed expo version:
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (The following p...d expo version::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  @types/react@19.1.17 - expected version: ~19.2.10
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8084
+Logs for your project will appear below.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+Tunnel connection has been closed. This is often related to intermittent connection issues between the dev server and 
+ngrok. Restart the dev server to try connecting to ngrok again.
+Check the Ngrok status page for outages: https://status.ngrok.com/
+Tunnel connected.
+C:\Users\adill\Desktop\system_absence\absenceMobile\node_modules\expo\node_modules\@expo\cli\build\src\utils\errors.js:
+130
+    throw error;
+    ^
+
+Error: ENOENT: no such file or directory, watch 
+'C:\Users\adill\Desktop\system_absence\absenceMobile\node_modules\.expo-av-B5dMIzwK\plugin\build'
+    at FSWatcher.<computed> (node:internal/fs/watchers:254:19)
+    at Object.watch (node:fs:2549:36)
+    at FallbackWatcher.#watchdir (C:\Users\adill\Desktop\system_absence\absenceMobile\node_modules\metro-file-map\src\w
+atchers\FallbackWatcher.js:133:33)
+    at 
+C:\Users\adill\Desktop\system_absence\absenceMobile\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:233:31
+    at Walker.<anonymous> 
+(C:\Users\adill\Desktop\system_absence\absenceMobile\node_modules\metro-file-map\src\watchers\FallbackWatcher.js:378:5)
+    at Walker.emit (node:events:519:28)
+    at C:\Users\adill\Desktop\system_absence\absenceMobile\node_modules\walker\lib\walker.js:69:16
+    at FSReqCallback.oncomplete (node:fs:187:23) {
+  errno: -4058,
+  syscall: 'watch',
+  code: 'ENOENT',
+  path: 'C:\\Users\\adill\\Desktop\\system_absence\\absenceMobile\\node_modules\\.expo-av-B5dMIzwK\\plugin\\build',
+  filename: 'C:\\Users\\adill\\Desktop\\system_absence\\absenceMobile\\node_modules\\.expo-av-B5dMIzwK\\plugin\\build'
+}
+
+Node.js v22.19.0

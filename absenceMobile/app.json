@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "Absence",
+    "slug": "absenceMobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/app_desktop_icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/app_desktop_icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.adill.absence",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.adill.absence",
+      "versionCode": 1,
+      "googleServicesFile": "./google-services.json",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/app_desktop_icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "NOTIFICATIONS",
+        "WAKE_LOCK"
+      ]
+    },
+    "plugins": [
+      "expo-notifications",
+      "expo-font"
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "9d137d00-bbd8-4e6e-b505-9aae076c5bb1"
+      }
+    },
+    "owner": "lamkadem_adil"
+  }
+}

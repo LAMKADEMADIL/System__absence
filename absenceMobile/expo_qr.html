@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expo Go - QR Code | نظام الغياب</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 30px;
+            padding: 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 26px;
+            font-weight: 900;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+        .qr-wrapper {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            display: inline-block;
+            margin: 0 auto 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .qr-wrapper img {
+            width: 260px;
+            height: 260px;
+            display: block;
+        }
+
+        .steps {
+            text-align: right;
+            margin-bottom: 25px;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .step-num {
+            background: linear-gradient(135deg, #6c63ff, #3b82f6);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .step-text {
+            color: rgba(255,255,255,0.85);
+            font-size: 14px;
+            line-height: 1.6;
+            padding-top: 3px;
+        }
+
+        .url-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+
+        .url-box .label {
+            color: rgba(255,255,255,0.4);
+            font-size: 11px;
+            margin-bottom: 4px;
+        }
+
+        .url-box .url {
+            color: #6c63ff;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.3); }
+        }
+
+        .divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">📱</div>
+        <h1>نظام تتبع الغياب</h1>
+        <p class="subtitle">ISTA Bensimane - تطبيق الهاتف</p>
+
+        <div class="qr-wrapper">
+            <img 
+                src="https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=exp%3A%2F%2F9pxrwoe-lamkadem_adil-8081.exp.direct&margin=0&color=000000&bgcolor=ffffff" 
+                alt="QR Code للتطبيق"
+            />
+        </div>
+
+        <div class="steps">
+            <div class="step">
+                <div class="step-num">1</div>
+                <div class="step-text">افتح تطبيق <strong>Expo Go</strong> على هاتفك</div>
+            </div>
+            <div class="step">
+                <div class="step-num">2</div>
+                <div class="step-text">اضغط على <strong>"Scan QR Code"</strong></div>
+            </div>
+            <div class="step">
+                <div class="step-num">3</div>
+                <div class="step-text">وجّه الكاميرا نحو رمز QR أعلاه</div>
+            </div>
+            <div class="step">
+                <div class="step-num">4</div>
+                <div class="step-text">انتظر قليلاً حتى يفتح التطبيق 🚀</div>
+            </div>
+        </div>
+
+        <hr class="divider">
+
+        <div class="url-box">
+            <div class="label">أو أدخل الرابط يدوياً في Expo Go:</div>
+            <div class="url">exp://9pxrwoe-lamkadem_adil-8081.exp.direct</div>
+        </div>
+
+        <div class="status">
+            <div class="dot"></div>
+            الخادم يعمل الآن
+        </div>
+    </div>
+</body>
+</html>
