@@ -285,27 +285,40 @@ export default function WeeklyScheduleImporter() {
           return;
         }
 
-        // Try to automatically find and parse the week range from the first few rows
+        // Try to automatically find and parse the week range from ANY row
         let detectedWeek = '';
-        for (let r = 0; r < Math.min(data.length, 5); r++) {
-          const rowStr = data[r].join(' ');
-          const match = rowStr.match(/Du:\s*(\d{2}-\d{2}-\d{4})\s*Au:\s*(\d{2}-\d{2}-\d{4})/i);
-          if (match) {
-            detectedWeek = `${match[1]} au ${match[2]}`;
-            break;
+        const detectWeekFromString = (str: string): string => {
+          // Pattern 1: Du: 03-08-2026 Au: 09-08-2026  (colon, dash)
+          let m = str.match(/Du:?\s*(\d{2}[-\/]\d{2}[-\/]\d{4})\s*Au:?\s*(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
+          if (!m) {
+            // Pattern 2: Du 03/08/2026 au 09/08/2026 (no colon)
+            m = str.match(/Du\s+(\d{2}[-\/]\d{2}[-\/]\d{4})\s+[Aa]u\s+(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
           }
+          if (m) {
+            const d1 = m[1].replace(/\//g, '-');
+            const d2 = m[2].replace(/\//g, '-');
+            return `${d1} au ${d2}`;
+          }
+          return '';
+        };
+        for (let r = 0; r < Math.min(data.length, 10); r++) {
+          const rowStr = data[r].map(String).join(' ');
+          const found = detectWeekFromString(rowStr);
+          if (found) { detectedWeek = found; break; }
         }
+        // Always set weekRange if detected
         if (detectedWeek) {
           setWeekRange(detectedWeek);
         } else {
-          // Default fallback next week
+          // Default fallback: current week Monday -> Saturday
           const today = new Date();
-          const nextMonday = new Date();
-          nextMonday.setDate(today.getDate() + (1 - today.getDay() + 7) % 7);
-          const nextSunday = new Date(nextMonday);
-          nextSunday.setDate(nextMonday.getDate() + 6);
-          const format = (d: Date) => d.toLocaleDateString('fr-FR').replace(/\//g, '-');
-          setWeekRange(`${format(nextMonday)} au ${format(nextSunday)}`);
+          const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+          const monday = new Date(today);
+          monday.setDate(today.getDate() - dayOfWeek + 1);
+          const saturday = new Date(monday);
+          saturday.setDate(monday.getDate() + 5);
+          const fmt = (d: Date) => d.toLocaleDateString('fr-FR').replace(/\//g, '-');
+          setWeekRange(`${fmt(monday)} au ${fmt(saturday)}`);
         }
 
         // Find where the grid of formateurs starts. Usually row index 3 or 4.
@@ -484,13 +497,16 @@ export default function WeeklyScheduleImporter() {
           maxX = 743; // Exact right boundary for standard grid layout
         }
 
-        // 2. Precompute the exact column centers based on day header anchors.
-        let sumLundiSE1Center = 0;
-        let countLundiSE1Center = 0;
+        // 2. Precompute the exact column centers based on SE1/SE2/SE3/SE4 header anchors.
+        // SE headers appear multiple times (once per day), we collect all and average per slot position.
         const dayNames = ['LUNDI', 'MARDI', 'MERCREDI', 'JEUDI', 'VENDREDI', 'SAMEDI'];
         const dayWidth = 113.76;
         const slotWidth = dayWidth / 4; // 28.44
-        const dayShift = 1.73;
+
+        // Map: slotName (SE1..SE4) -> list of x-centers from all occurrences
+        const slotCenterMap: Record<string, number[]> = { SE1: [], SE2: [], SE3: [], SE4: [] };
+        let sumLundiSE1Center = 0;
+        let countLundiSE1Center = 0;
 
         try {
           for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -505,22 +521,51 @@ export default function WeeklyScheduleImporter() {
             })).filter((item: any) => item.str.length > 0 && !isNoiseText(item.str));
 
             pageItems.forEach((item: any) => {
-              const upperStr = item.str.toUpperCase();
-              const dayIdx = dayNames.indexOf(upperStr);
+              const upperStr = item.str.toUpperCase().replace(/\s+/g, '');
+              const center = item.x + (item.width || 0) / 2;
+
+              // Detect SE1..SE4 header cells
+              if (upperStr === 'SE1' || upperStr === 'SE2' || upperStr === 'SE3' || upperStr === 'SE4') {
+                slotCenterMap[upperStr].push(center);
+              }
+
+              // Fallback: detect day headers for legacy estimation
+              const dayIdx = dayNames.indexOf(item.str.toUpperCase());
               if (dayIdx !== -1) {
-                const dayCenter = item.x + (item.width || 0) / 2;
-                const estimatedLundiSE1 = dayCenter - dayShift - dayIdx * dayWidth;
+                const dayCenter = center;
+                const estimatedLundiSE1 = dayCenter - 1.73 - dayIdx * dayWidth;
                 sumLundiSE1Center += estimatedLundiSE1;
                 countLundiSE1Center++;
               }
             });
           }
         } catch (e) {
-          console.error("Error detecting day headers dynamically:", e);
+          console.error("Error detecting column headers dynamically:", e);
         }
 
+        // Build column centers: 6 days * 4 slots = 24 columns
         const columnCenters: number[] = [];
-        if (countLundiSE1Center > 0) {
+
+        // If we detected SE headers, use them to find precise Lundi SE1 center
+        const hasSEHeaders = slotCenterMap['SE1'].length >= 6; // at least one per day
+        if (hasSEHeaders) {
+          // Average center of SE1 headers for each day position (sorted left to right)
+          const sortedSE1Centers = [...slotCenterMap['SE1']].sort((a, b) => a - b);
+          const sortedSE2Centers = [...slotCenterMap['SE2']].sort((a, b) => a - b);
+          const sortedSE3Centers = [...slotCenterMap['SE3']].sort((a, b) => a - b);
+          const sortedSE4Centers = [...slotCenterMap['SE4']].sort((a, b) => a - b);
+
+          // Take first 6 per slot type (one per day, left to right)
+          const slotsByDay = [sortedSE1Centers, sortedSE2Centers, sortedSE3Centers, sortedSE4Centers];
+          for (let d = 0; d < 6; d++) {
+            for (let s = 0; s < 4; s++) {
+              const centers = slotsByDay[s];
+              const center = centers[d] ?? (columnCenters[d * 4] ?? 0) + s * slotWidth;
+              columnCenters.push(center);
+            }
+          }
+        } else if (countLundiSE1Center > 0) {
+          // Fallback: estimate from day headers
           const avgLundiSE1Center = sumLundiSE1Center / countLundiSE1Center;
           for (let d = 0; d < 6; d++) {
             for (let s = 0; s < 4; s++) {
@@ -528,7 +573,7 @@ export default function WeeklyScheduleImporter() {
             }
           }
         } else {
-          // Fallback to absolute coordinates if no day headers are found at all
+          // Final fallback to absolute coordinates
           const defaultLundiSE1 = 110.08;
           for (let d = 0; d < 6; d++) {
             for (let s = 0; s < 4; s++) {
@@ -536,6 +581,7 @@ export default function WeeklyScheduleImporter() {
             }
           }
         }
+
 
         // 3. Process each page's teacher schedule blocks
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
@@ -672,8 +718,19 @@ export default function WeeklyScheduleImporter() {
         return;
       }
 
+      // Always update weekRange from PDF (override any old value)
       if (lastDetectedWeek) {
         setWeekRange(lastDetectedWeek);
+      } else {
+        // Fallback: current week Monday -> Saturday
+        const today = new Date();
+        const dayOfWeek = today.getDay() === 0 ? 7 : today.getDay();
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - dayOfWeek + 1);
+        const saturday = new Date(monday);
+        saturday.setDate(monday.getDate() + 5);
+        const fmt = (d: Date) => d.toLocaleDateString('fr-FR').replace(/\//g, '-');
+        setWeekRange(`${fmt(monday)} au ${fmt(saturday)}`);
       }
 
       setParsedSessions(sortSessions(allSessions));

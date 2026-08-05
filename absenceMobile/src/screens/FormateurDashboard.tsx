@@ -311,14 +311,72 @@ export default function FormateurDashboard({ navigation }: any) {
         
         setMyWeeklySchedule(list);
         
-        // Strictly set the active week to the actual system calendar current week
-        const currentWeek = getCurrentWeekRange();
+        // Find the current week by checking which saved semaine contains today's date
+        const today = new Date();
+        const todayTime = today.getTime();
+        
+        const normalizeSemaine = (s: string) => s ? s.replace(/\//g, '-') : '';
+        
+        const parseSemaineDate = (dateStr: string): Date | null => {
+          // Accepts DD-MM-YYYY
+          const parts = dateStr.split('-');
+          if (parts.length === 3) {
+            return new Date(parseInt(parts[2]), parseInt(parts[1]) - 1, parseInt(parts[0]));
+          }
+          return null;
+        };
+        
+        // Collect unique semaine values from all emplois_du_temps
+        const allWeeks = new Set<string>();
+        snap.docs.forEach(d => {
+          const sem = (d.data() as any).semaine;
+          if (sem) allWeeks.add(normalizeSemaine(sem));
+        });
+        
+        // Find which week contains today
+        let matchedWeek = '';
+        allWeeks.forEach(week => {
+          const parts = week.split(' au ');
+          if (parts.length === 2) {
+            const start = parseSemaineDate(parts[0].trim());
+            const end = parseSemaineDate(parts[1].trim());
+            if (start && end) {
+              // Add 1 day to end to make it inclusive
+              end.setDate(end.getDate() + 1);
+              if (todayTime >= start.getTime() && todayTime < end.getTime()) {
+                matchedWeek = week;
+              }
+            }
+          }
+        });
+        
+        // Fallback: use the most recent past week if today not in any range
+        if (!matchedWeek && allWeeks.size > 0) {
+          let bestWeek = '';
+          let bestDiff = Infinity;
+          allWeeks.forEach(week => {
+            const parts = week.split(' au ');
+            if (parts.length === 2) {
+              const start = parseSemaineDate(parts[0].trim());
+              if (start) {
+                const diff = Math.abs(todayTime - start.getTime());
+                if (diff < bestDiff) {
+                  bestDiff = diff;
+                  bestWeek = week;
+                }
+              }
+            }
+          });
+          matchedWeek = bestWeek;
+        }
+        
+        const currentWeek = matchedWeek || getCurrentWeekRange();
         setCurrentWeekRange(currentWeek);
         
-        // Filter today's list strictly matching the actual current week range
+        // Filter today's list strictly matching the matched week range
         const todayDayName = dateInfo.dayName;
         const todayList = list.filter(item => {
-          const itemSemaine = item.semaine ? item.semaine.replace(/\//g, '-') : '';
+          const itemSemaine = normalizeSemaine(item.semaine || '');
           return itemSemaine === currentWeek && item.jour.trim().toUpperCase() === todayDayName.trim().toUpperCase();
         });
         
