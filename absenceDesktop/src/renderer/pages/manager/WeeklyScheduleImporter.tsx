@@ -287,24 +287,21 @@ export default function WeeklyScheduleImporter() {
 
         // Try to automatically find and parse the week range from ANY row
         let detectedWeek = '';
-        const detectWeekFromString = (str: string): string => {
-          // Pattern 1: Du: 03-08-2026 Au: 09-08-2026  (colon, dash)
-          let m = str.match(/Du:?\s*(\d{2}[-\/]\d{2}[-\/]\d{4})\s*Au:?\s*(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
-          if (!m) {
-            // Pattern 2: Du 03/08/2026 au 09/08/2026 (no colon)
-            m = str.match(/Du\s+(\d{2}[-\/]\d{2}[-\/]\d{4})\s+[Aa]u\s+(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
-          }
-          if (m) {
-            const d1 = m[1].replace(/\//g, '-');
-            const d2 = m[2].replace(/\//g, '-');
-            return `${d1} au ${d2}`;
-          }
-          return '';
-        };
         for (let r = 0; r < Math.min(data.length, 10); r++) {
           const rowStr = data[r].map(String).join(' ');
-          const found = detectWeekFromString(rowStr);
-          if (found) { detectedWeek = found; break; }
+          const dateRegex = /\d{2}\s*[-\/]\s*\d{2}\s*[-\/]\s*\d{2,4}/g;
+          const allDates = rowStr.match(dateRegex);
+          if (allDates && allDates.length >= 2) {
+            const d1 = allDates[0].replace(/\s+/g, '').replace(/\//g, '-');
+            const d2 = allDates[1].replace(/\s+/g, '').replace(/\//g, '-');
+            const fixYear = (d: string) => {
+              const parts = d.split('-');
+              if (parts[2].length === 2) parts[2] = '20' + parts[2];
+              return parts.join('-');
+            };
+            detectedWeek = `${fixYear(d1)} au ${fixYear(d2)}`;
+            break;
+          }
         }
         // Always set weekRange if detected
         if (detectedWeek) {
@@ -424,33 +421,24 @@ export default function WeeklyScheduleImporter() {
           // Try to find the week range FROM RAW TEXT (before any filtering)
           if (!detectedWeek) {
             const rawItems = textContent.items.map((item: any) => item.str?.trim()).filter(Boolean);
-            const rawText = rawItems.join(' ');
+            // Join without spaces to handle pdfjs character-by-character chunking
+            const rawText = rawItems.join('');
             
-            console.log('[PDF DATE DEBUG] Raw text from page:', rawText.substring(0, 500));
+            // Because we joined without spaces, dates will look like 10-08-2026
+            const dateRegex = /\d{2}[-\/]\d{2}[-\/]\d{2,4}/g;
+            const allDates = rawText.match(dateRegex);
             
-            // Pattern 1: Du: 03-08-2026 Au: 09-08-2026
-            let matchW = rawText.match(/Du:?\s*(\d{2}[-\/]\d{2}[-\/]\d{4}).*?Au:?\s*(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
-            
-            // Pattern 2: Du 03/08/2026 au 09/08/2026 (no colon)
-            if (!matchW) {
-              matchW = rawText.match(/Du\s+(\d{2}[-\/]\d{2}[-\/]\d{4})\s+[Aa]u\s+(\d{2}[-\/]\d{2}[-\/]\d{4})/i);
-            }
-            
-            // Pattern 3: Find two dates and assume Du...Au order
-            if (!matchW) {
-              const allDates = rawText.match(/\d{2}[-\/]\d{2}[-\/]\d{4}/g);
-              console.log('[PDF DATE DEBUG] All dates found:', allDates);
-              if (allDates && allDates.length >= 2) {
-                matchW = [rawText, allDates[0], allDates[1]] as any;
-              }
-            }
-            
-            console.log('[PDF DATE DEBUG] Match result:', matchW ? `${matchW[1]} au ${matchW[2]}` : 'NOT FOUND');
-            
-            if (matchW) {
-              const d1 = matchW[1].replace(/\//g, '-');
-              const d2 = matchW[2].replace(/\//g, '-');
-              detectedWeek = `${d1} au ${d2}`;
+            if (allDates && allDates.length >= 2) {
+              const d1 = allDates[0].replace(/\//g, '-');
+              const d2 = allDates[1].replace(/\//g, '-');
+              
+              const fixYear = (d: string) => {
+                const parts = d.split('-');
+                if (parts[2].length === 2) parts[2] = '20' + parts[2];
+                return parts.join('-');
+              };
+              
+              detectedWeek = `${fixYear(d1)} au ${fixYear(d2)}`;
             }
           }
 
