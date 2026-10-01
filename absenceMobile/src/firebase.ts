@@ -1,10 +1,10 @@
 import { initializeApp, getApps } from 'firebase/app';
-// @ts-ignore
-import { initializeAuth, getReactNativePersistence, getAuth } from 'firebase/auth';
+import { initializeAuth, getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
-const firebase = {
+const firebaseConfig = {
   apiKey: 'AIzaSyAfrdngdBpRzlSC9cXxs3aCGe3gZMrYRts',
   authDomain: 'ista-absence.firebaseapp.com',
   projectId: 'ista-absence',
@@ -17,10 +17,17 @@ let app;
 let authInstance;
 
 if (getApps().length === 0) {
-  app = initializeApp(firebase);
-  authInstance = initializeAuth(app, {
-    persistence: getReactNativePersistence(AsyncStorage)
-  });
+  app = initializeApp(firebaseConfig);
+  if (Platform.OS === 'web') {
+    // For Web, use the default persistence
+    authInstance = getAuth(app);
+  } else {
+    // For Mobile (React Native), use AsyncStorage
+    const authModule = require('firebase/auth');
+    authInstance = initializeAuth(app, {
+      persistence: authModule.getReactNativePersistence(AsyncStorage)
+    });
+  }
 } else {
   app = getApps()[0];
   authInstance = getAuth(app);

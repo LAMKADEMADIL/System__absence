@@ -10,17 +10,8 @@ import { auth, db } from './src/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 
-// MOCKED Notifications
-const Notifications = {
-  setNotificationHandler: () => {},
-  setNotificationChannelAsync: async () => {},
-  AndroidImportance: { MAX: 5 },
-  addNotificationReceivedListener: () => ({ remove: () => {} }),
-  addNotificationResponseReceivedListener: () => ({ remove: () => {} }),
-} as any;
-
-// Configure notifications
-Notifications.setNotificationHandler({
+// Configure how notifications appear when app is in foreground
+/* Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
@@ -38,7 +29,7 @@ if (Platform.OS === 'android') {
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#FF231F7C',
   });
-}
+} */
 
 // Screens
 import SplashScreen from './src/screens/SplashScreen';
@@ -74,18 +65,18 @@ export default function App() {
       }
     });
 
-    const notificationListener = Notifications.addNotificationReceivedListener(notification => {
+    /* const notificationListener = Notifications.addNotificationReceivedListener(notification => {
       console.log('Notification received while app is open:', notification);
     });
 
     const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
       console.log('User clicked notification:', response);
-    });
+    }); */
 
     return () => {
       unsubscribeAuth();
-      notificationListener.remove();
-      responseListener.remove();
+      // notificationListener.remove();
+      // responseListener.remove();
     };
   }, []);
 

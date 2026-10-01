@@ -15,8 +15,8 @@ import { registerForPushNotificationsAsync } from '../utils/notifications';
 
 // Set up notification handler (MOCKED)
 const Notifications = {
-  setNotificationHandler: () => {},
-  scheduleNotificationAsync: async () => {},
+  setNotificationHandler: () => { },
+  scheduleNotificationAsync: async () => { },
   AndroidNotificationPriority: { MAX: 2 }
 } as any;
 
@@ -41,10 +41,10 @@ export default function DirecteurDashboard({ navigation }: any) {
     const mon = new Date(new Date().setDate(new Date().getDate() + diffToMon));
     const sat = new Date(mon);
     sat.setDate(mon.getDate() + 5);
-    
+
     return `Semaine: ${mon.getDate()} - ${sat.getDate()}`;
   };
-  
+
   // Custom Notification State
   const [lastRequestCount, setLastRequestCount] = useState(0);
   const [showInAppNotif, setShowInAppNotif] = useState(false);
@@ -86,7 +86,7 @@ export default function DirecteurDashboard({ navigation }: any) {
     setNotifData(data);
     setShowInAppNotif(true);
     Animated.spring(slideAnim, { toValue: 100, useNativeDriver: true, tension: 50, friction: 8 }).start();
-    
+
     setTimeout(() => {
       Animated.timing(slideAnim, { toValue: -150, duration: 500, useNativeDriver: true }).start(() => {
         setShowInAppNotif(false);
@@ -99,7 +99,7 @@ export default function DirecteurDashboard({ navigation }: any) {
     let isInitialLoad = true;
     const unsubReq = onSnapshot(qReq, snap => {
       setUnlockRequests(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-      
+
       if (!isInitialLoad) {
         snap.docChanges().forEach(change => {
           if (change.type === 'added') {
@@ -141,15 +141,15 @@ export default function DirecteurDashboard({ navigation }: any) {
     try {
       const batch = writeBatch(db);
       const sessList = Array.isArray(req.sessions) ? req.sessions : [req.session];
-      
+
       // 1. Delete lock sessions
       for (const sNum of sessList) {
         const lockId = `${req.groupId}_S${sNum}_${req.day}_${req.month}_${req.year}`;
         batch.delete(doc(db, 'locked_sessions', lockId));
       }
-      
+
       // 2. Reset absences to submitted: false
-      const qAbs = query(collection(db, 'absences'), 
+      const qAbs = query(collection(db, 'absences'),
         where('groupId', '==', req.groupId),
         where('day', '==', req.day),
         where('month', '==', req.month),
@@ -168,7 +168,7 @@ export default function DirecteurDashboard({ navigation }: any) {
 
       // 4. Update request status
       batch.update(doc(db, 'unlock_requests', req.id), { status: 'accepted', resolvedAt: serverTimestamp() });
-      
+
       await batch.commit();
 
       // 5. Create Notification for Formateur
@@ -185,9 +185,10 @@ export default function DirecteurDashboard({ navigation }: any) {
   };
 
   const handleReject = async (req: any) => {
+    س
     try {
       await updateDoc(doc(db, 'unlock_requests', req.id), { status: 'rejected', resolvedAt: serverTimestamp() });
-      
+
       // Create Notification for Formateur
       await addDoc(collection(db, 'notifications'), {
         targetId: req.formateurId,
@@ -206,17 +207,17 @@ export default function DirecteurDashboard({ navigation }: any) {
       {/* Custom In-App Notification Banner */}
       <Animated.View style={[s.notifBanner, { transform: [{ translateY: slideAnim }] }]}>
         <TouchableOpacity style={s.notifContent} onPress={() => { Animated.timing(slideAnim, { toValue: -150, duration: 300, useNativeDriver: true }).start(); }}>
-           <View style={s.notifIcon}><Ionicons name="notifications" size={24} color="#fff" /></View>
-           <View style={{ flex: 1 }}>
-              <Text style={s.notifTitle}>Demande de Déverrouillage</Text>
-              <Text style={s.notifBody} numberOfLines={2}>
-                L'enseignant {notifData?.formateurName} demande l'ouverture des séances (S{Array.isArray(notifData?.sessions) ? notifData.sessions.join(', S') : notifData?.session}) pour {notifData?.groupName}
-              </Text>
-           </View>
+          <View style={s.notifIcon}><Ionicons name="notifications" size={24} color="#fff" /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.notifTitle}>Demande de Déverrouillage</Text>
+            <Text style={s.notifBody} numberOfLines={2}>
+              L'enseignant {notifData?.formateurName} demande l'ouverture des séances (S{Array.isArray(notifData?.sessions) ? notifData.sessions.join(', S') : notifData?.session}) pour {notifData?.groupName}
+            </Text>
+          </View>
         </TouchableOpacity>
       </Animated.View>
 
-      <ScrollView 
+      <ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 50 }}
         refreshControl={
@@ -226,10 +227,10 @@ export default function DirecteurDashboard({ navigation }: any) {
         <View style={s.topRow}>
           <TouchableOpacity onPress={() => setActiveTab('requests')} style={s.headerNotifBtn}>
             <Animated.View style={{ transform: [{ translateX: bellShake }] }}>
-              <Ionicons 
-                name={unlockRequests.length > 0 ? "notifications" : "notifications-outline"} 
-                size={26} 
-                color={unlockRequests.length > 0 ? "#EF4444" : "#1E3A8A"} 
+              <Ionicons
+                name={unlockRequests.length > 0 ? "notifications" : "notifications-outline"}
+                size={26}
+                color={unlockRequests.length > 0 ? "#EF4444" : "#1E3A8A"}
               />
             </Animated.View>
             {unlockRequests.length > 0 && (
@@ -296,10 +297,10 @@ export default function DirecteurDashboard({ navigation }: any) {
 
                 {/* Professional Bottom Time Badge */}
                 <View style={s.timeBadgeCenter}>
-                   <Ionicons name="time" size={10} color="#1E3A8A" />
-                   <Text style={s.timeTextCenter}>
-                     Envoyé à {req.requestedAt?.toDate ? req.requestedAt.toDate().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                   </Text>
+                  <Ionicons name="time" size={10} color="#1E3A8A" />
+                  <Text style={s.timeTextCenter}>
+                    Envoyé à {req.requestedAt?.toDate ? req.requestedAt.toDate().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                  </Text>
                 </View>
               </View>
             ))
@@ -315,10 +316,10 @@ export default function DirecteurDashboard({ navigation }: any) {
               <Text style={s.menuItemText}>Mon Profil</Text>
             </TouchableOpacity>
             <View style={s.menuDivider} />
-            <TouchableOpacity style={s.menuItem} onPress={async () => { 
-              setMenuVisible(false); 
+            <TouchableOpacity style={s.menuItem} onPress={async () => {
+              setMenuVisible(false);
               await auth.signOut();
-              navigation.replace('Login'); 
+              navigation.replace('Login');
             }}>
               <Ionicons name="log-out-outline" size={20} color="#E53E3E" />
               <Text style={[s.menuItemText, { color: '#E53E3E' }]}>Déconnexion</Text>
@@ -331,14 +332,14 @@ export default function DirecteurDashboard({ navigation }: any) {
       <Modal transparent visible={successModal.visible} animationType="none">
         <View style={s.successOverlay}>
           <Animated.View style={[s.successCard, { opacity: successAnim, transform: [{ scale: successScale }] }]}>
-             <View style={[s.successIconCircle, { backgroundColor: successModal.type === 'success' ? '#10B981' : '#64748B' }]}>
-                <Ionicons name={successModal.type === 'success' ? "checkmark-circle" : "information-circle"} size={50} color="white" />
-             </View>
-             <Text style={s.successTitle}>{successModal.type === 'success' ? "Succès !" : "Info"}</Text>
-             <Text style={s.successMsg}>{successModal.message}</Text>
-             <TouchableOpacity style={s.successBtn} onPress={hideSuccess}>
-                <Text style={s.successBtnText}>D'ACCORD</Text>
-             </TouchableOpacity>
+            <View style={[s.successIconCircle, { backgroundColor: successModal.type === 'success' ? '#10B981' : '#64748B' }]}>
+              <Ionicons name={successModal.type === 'success' ? "checkmark-circle" : "information-circle"} size={50} color="white" />
+            </View>
+            <Text style={s.successTitle}>{successModal.type === 'success' ? "Succès !" : "Info"}</Text>
+            <Text style={s.successMsg}>{successModal.message}</Text>
+            <TouchableOpacity style={s.successBtn} onPress={hideSuccess}>
+              <Text style={s.successBtnText}>D'ACCORD</Text>
+            </TouchableOpacity>
           </Animated.View>
         </View>
       </Modal>

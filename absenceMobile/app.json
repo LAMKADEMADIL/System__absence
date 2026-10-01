@@ -4,6 +4,12 @@
     "slug": "absenceMobile",
     "version": "1.0.0",
     "orientation": "portrait",
+    "updates": {
+      "enabled": false
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "icon": "./assets/app_desktop_icon.png",
     "userInterfaceStyle": "light",
     "ios": {
