@@ -42,7 +42,7 @@ export default function Login() {
       // Save trimmed email for next time
       localStorage.setItem('lastLoginEmail', trimmedEmail);
 
-      if (user.role === 'Directeur') {
+      if (user.role ===  'Directeur') {
         navigate('/dir');
       } else {
         navigate('/home');

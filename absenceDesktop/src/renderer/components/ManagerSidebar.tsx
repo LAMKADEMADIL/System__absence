@@ -2,11 +2,9 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Nav, Button } from 'react-bootstrap';
 import Logo from '../assets/Logo_ofppt.png';
-import { useAppSettings } from '../context/AppSettingsContext';
 
 export default function ManagerSidebar() {
   const navigate = useNavigate();
-  const { appName } = useAppSettings();
 
   const handleLogout = () => {
     localStorage.removeItem('user');
@@ -16,16 +14,8 @@ export default function ManagerSidebar() {
   return (
     <div className="d-flex flex-column h-100 bg-white sidebar-container shadow-sm">
       {/* Brand Header */}
-      <div className="p-3 text-center mb-1">
-        <img src={Logo} alt="Logo" style={{ width: '80px', height: 'auto' }} />
-        <div className="mt-2 px-1">
-          <span 
-            className="fw-bold d-block text-secondary" 
-            style={{ fontSize: '0.75rem', letterSpacing: '0.3px', lineHeight: '1.25', color: '#475569' }}
-          >
-            {appName}
-          </span>
-        </div>
+      <div className="p-4 text-center mb-2">
+        <img src={Logo} alt="Logo" style={{ width: '85px', height: 'auto' }} />
       </div>
 
       {/* Navigation Links */}
