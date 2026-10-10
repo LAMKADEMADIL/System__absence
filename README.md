@@ -1,11 +1,11 @@
-#  SAS - Suivi d'Absence System
+#  Gestion de Présence des stagiaires
 
 [![React Native](https://img.shields.io/badge/React_Native-09D3AC?style=for-the-badge&logo=react&logoColor=white)](https://reactnative.dev/)
 [![Electron](https://img.shields.io/badge/Electron-47848F?style=for-the-badge&logo=electron&logoColor=white)](https://www.electronjs.org/)
 [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![Expo](https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
 
-**SAS (Suivi d'Absence System)** est une solution numérique intégrée conçue pour l'institut **ISTA Tertiaire My Rachid (OFPPT)** afin de numériser, sécuriser et automatiser le processus de suivi des absences des stagiaires. 
+**Gestion de Présence des stagiaires** est une solution numérique intégrée conçue pour l'institut **ISTA Tertiaire My Rachid (OFPPT)** afin de numériser, sécuriser et automatiser le processus de suivi des absences et de présence des stagiaires. 
 
 Le système repose sur un flux de validation rigoureux en trois étapes (**"Saisie, Validation, Justification"**) pour éliminer les erreurs et garantir la fiabilité absolue des rapports d'absence transmis à l'administration.
 

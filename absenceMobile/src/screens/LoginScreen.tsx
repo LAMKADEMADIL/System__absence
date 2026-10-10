@@ -13,6 +13,7 @@ import Constants from 'expo-constants';
 import { registerForPushNotificationsAsync } from '../utils/notifications';
 
 export default function LoginScreen() {
+  const [appName, setAppName] = useState('Gestion de Présence des stagiaires');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -24,6 +25,19 @@ export default function LoginScreen() {
   const navigation = useNavigation<any>();
 
   useEffect(() => {
+    const loadAppSettings = async () => {
+      try {
+        const docRef = doc(db, 'settings', 'general');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists() && docSnap.data().appName) {
+          setAppName(docSnap.data().appName);
+        }
+      } catch (e) {
+        console.log('Error loading app settings', e);
+      }
+    };
+    loadAppSettings();
+
     const loadSavedCredentials = async () => {
       try {
         const savedEmail = await AsyncStorage.getItem('@saved_email');
@@ -148,7 +162,7 @@ export default function LoginScreen() {
               />
           </View>
 
-          <Text style={styles.title}>Système d'Absence</Text>
+          <Text style={styles.title}>{appName}</Text>
           <Text style={styles.subtitle}>Accès sécurisé pour le personnel</Text>
 
           <View style={styles.inputGroup}>

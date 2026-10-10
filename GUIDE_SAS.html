@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guide d'Utilisation — SAS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f5f5;
+    color: #1a1a2e;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ── PAGE LAYOUT ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 0 auto 20px;
+    background: white;
+    padding: 18mm 18mm 15mm;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    position: relative;
+    page-break-after: always;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none; margin: 0; page-break-after: always; }
+    .no-print { display: none; }
+  }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 297mm;
+    background: linear-gradient(160deg, #1a237e 0%, #1565c0 50%, #0288d1 100%);
+    color: white;
+    padding: 30mm 20mm;
+  }
+
+  .cover .logo-box {
+    width: 90px; height: 90px;
+    background: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 24px;
+    font-size: 11px; font-weight: 700; color: #1565c0;
+    letter-spacing: 1px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+
+  .cover h1 {
+    font-size: 38px; font-weight: 800;
+    letter-spacing: -1px;
+    margin-bottom: 8px;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.2);
+  }
+
+  .cover .subtitle {
+    font-size: 16px; font-weight: 300;
+    opacity: 0.9; margin-bottom: 40px;
+  }
+
+  .cover .badge {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 30px;
+    padding: 8px 24px;
+    font-size: 13px; font-weight: 500;
+    margin-bottom: 12px;
+    backdrop-filter: blur(10px);
+  }
+
+  .cover .divider {
+    width: 80px; height: 3px;
+    background: rgba(255,255,255,0.5);
+    border-radius: 2px;
+    margin: 30px auto;
+  }
+
+  .cover .flow-box {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 16px;
+    padding: 20px 30px;
+    margin: 20px 0;
+    width: 100%;
+    max-width: 420px;
+  }
+
+  .cover .flow-title {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    opacity: 0.7; margin-bottom: 14px;
+  }
+
+  .cover .flow-steps {
+    display: flex; align-items: center;
+    justify-content: center; gap: 10px;
+  }
+
+  .cover .step {
+    text-align: center;
+  }
+
+  .cover .step-num {
+    width: 36px; height: 36px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 700;
+    margin: 0 auto 6px;
+  }
+
+  .cover .step-label {
+    font-size: 10px; font-weight: 500;
+    opacity: 0.85;
+  }
+
+  .cover .arrow {
+    font-size: 18px; opacity: 0.5; margin-top: -16px;
+  }
+
+  .cover .footer {
+    position: absolute; bottom: 20mm;
+    font-size: 11px; opacity: 0.7;
+    text-align: center;
+  }
+
+  /* ── SECTION HEADERS ── */
+  .section-header {
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 12px;
+    color: white;
+  }
+
+  .section-header.blue { background: linear-gradient(135deg, #1565c0, #0288d1); }
+  .section-header.green { background: linear-gradient(135deg, #2e7d32, #43a047); }
+  .section-header.mobile { background: linear-gradient(135deg, #283593, #3949ab); }
+
+  .section-header .icon { font-size: 22px; }
+  .section-header h2 { font-size: 16px; font-weight: 700; }
+  .section-header p { font-size: 11px; opacity: 0.85; margin-top: 2px; }
+
+  /* ── PAGE TITLE (inside content pages) ── */
+  .page-title {
+    font-size: 11px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 2px;
+    color: #9e9e9e;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  /* ── SCREEN BLOCK ── */
+  .screen-block {
+    margin-bottom: 22px;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .screen-block .screen-label {
+    padding: 10px 16px;
+    font-size: 12px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .screen-block .screen-label.blue-label { background: #e3f2fd; color: #1565c0; }
+  .screen-block .screen-label.green-label { background: #e8f5e9; color: #2e7d32; }
+  .screen-block .screen-label.mobile-label { background: #e8eaf6; color: #283593; }
+
+  .screen-block .screen-label .page-num {
+    background: currentColor;
+    color: white;
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  /* ── SCREENSHOT PLACEHOLDER ── */
+  .screenshot-placeholder {
+    width: 100%;
+    background: #fafafa;
+    border-top: 1px solid #e8e8e8;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    color: #bdbdbd;
+    font-size: 11px;
+  }
+
+  .screenshot-placeholder.desktop-ph { height: 170px; }
+  .screenshot-placeholder.mobile-ph { height: 200px; }
+
+  .screenshot-placeholder .ph-icon { font-size: 28px; }
+  .screenshot-placeholder .ph-text { font-weight: 500; color: #9e9e9e; }
+  .screenshot-placeholder .ph-sub { font-size: 10px; color: #bdbdbd; }
+
+  /* ── DESCRIPTION AREA ── */
+  .description {
+    padding: 12px 16px;
+    background: white;
+    border-top: 1px solid #f0f0f0;
+  }
+
+  .description p {
+    font-size: 12px; color: #424242;
+    line-height: 1.7;
+  }
+
+  /* ── STEPS LIST ── */
+  .steps {
+    padding: 10px 16px 14px;
+    background: white;
+    border-top: 1px solid #f5f5f5;
+  }
+
+  .steps ol {
+    padding-left: 18px;
+  }
+
+  .steps ol li {
+    font-size: 12px; color: #424242;
+    margin-bottom: 4px;
+    line-height: 1.6;
+  }
+
+  .steps ol li strong { color: #1a1a2e; }
+
+  /* ── TWO COLUMN LAYOUT (for mobile screens) ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  /* ── NOTE BOX ── */
+  .note-box {
+    background: #fff8e1;
+    border-left: 4px solid #f9a825;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 11.5px;
+    color: #5d4037;
+  }
+
+  .note-box strong { color: #e65100; }
+
+  /* ── ROLE TABLE ── */
+  .role-table {
+    width: 100%; border-collapse: collapse;
+    margin-top: 12px;
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid #e0e0e0;
+  }
+
+  .role-table th {
+    background: #1565c0; color: white;
+    padding: 10px 14px; font-size: 12px;
+    font-weight: 600; text-align: left;
+  }
+
+  .role-table td {
+    padding: 9px 14px; font-size: 12px;
+    border-bottom: 1px solid #f0f0f0;
+    color: #424242;
+  }
+
+  .role-table tr:last-child td { border-bottom: none; }
+  .role-table tr:nth-child(even) td { background: #fafafa; }
+
+  .badge-role {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+
+  .badge-blue { background: #e3f2fd; color: #1565c0; }
+  .badge-green { background: #e8f5e9; color: #2e7d32; }
+  .badge-purple { background: #e8eaf6; color: #283593; }
+
+  /* ── WORKFLOW DIAGRAM ── */
+  .workflow {
+    display: flex; align-items: stretch;
+    gap: 0; margin: 16px 0;
+    border-radius: 12px; overflow: hidden;
+    border: 1px solid #e0e0e0;
+  }
+
+  .wf-step {
+    flex: 1; padding: 16px 14px;
+    text-align: center;
+  }
+
+  .wf-step.s1 { background: #e3f2fd; }
+  .wf-step.s2 { background: #e8f5e9; }
+  .wf-step.s3 { background: #fce4ec; }
+
+  .wf-step .wf-num {
+    font-size: 22px; font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .wf-step.s1 .wf-num { color: #1565c0; }
+  .wf-step.s2 .wf-num { color: #2e7d32; }
+  .wf-step.s3 .wf-num { color: #c62828; }
+
+  .wf-step .wf-title {
+    font-size: 12px; font-weight: 700;
+    margin-bottom: 4px;
+    color: #1a1a2e;
+  }
+
+  .wf-step .wf-sub {
+    font-size: 10px; color: #757575;
+    line-height: 1.4;
+  }
+
+  .wf-arrow {
+    display: flex; align-items: center;
+    padding: 0 4px; background: #fff;
+    font-size: 18px; color: #bdbdbd;
+  }
+
+  /* ── PAGE NUMBER ── */
+  .page-footer {
+    position: absolute;
+    bottom: 10mm; left: 18mm; right: 18mm;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; color: #bdbdbd;
+    border-top: 1px solid #f0f0f0;
+    padding-top: 8px;
+  }
+
+  /* ── PRINT BUTTON ── */
+  .print-btn {
+    position: fixed; bottom: 30px; right: 30px;
+    background: #1565c0; color: white;
+    border: none; border-radius: 50px;
+    padding: 14px 28px;
+    font-size: 14px; font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(21,101,192,0.4);
+    display: flex; align-items: center; gap: 8px;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+    z-index: 1000;
+  }
+
+  .print-btn:hover {
+    background: #0d47a1;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(21,101,192,0.5);
+  }
+</style>
+</head>
+<body>
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║              PAGE 1 — COUVERTURE                    ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page cover">
+  <div class="logo-box">OFPPT</div>
+  <div class="badge">Système de Suivi d'Absence</div>
+  <h1>SAS</h1>
+  <div class="subtitle">Guide d'Utilisation Complet</div>
+
+  <div class="divider"></div>
+
+  <div class="flow-box">
+    <div class="flow-title">Flux de travail en 3 étapes</div>
+    <div class="flow-steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-label">Saisie<br><small>Formateur</small></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-label">Validation<br><small>Gestionnaire</small></div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-label">Justification<br><small>Scolarité</small></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="badge">📱 Application Mobile + 🖥️ Application Desktop</div>
+
+  <div class="footer">
+    ISTA Tertiaire My Rachid — OFPPT &nbsp;|&nbsp; Développé par Adil Lamkadem
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║         PAGE 2 — INTRODUCTION & WORKFLOW            ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page">
+  <div class="page-title">Introduction</div>
+
+  <div class="section-header blue">
+    <div class="icon">💡</div>
+    <div>
+      <h2>Qu'est-ce que le système SAS ?</h2>
+      <p>Solution numérique de gestion des absences — ISTA Tertiaire My Rachid</p>
+    </div>
+  </div>
+
+  <p style="font-size:13px; color:#424242; line-height:1.8; margin-bottom:18px;">
+    Le système SAS remplace les fiches d'absence papier par un système numérique rapide, sécurisé et connecté en temps réel. Il est composé de <strong>deux applications complémentaires</strong> : une application mobile pour les formateurs et gestionnaires, et une application desktop pour la scolarité et les directeurs.
+  </p>
+
+  <div class="workflow">
+    <div class="wf-step s1">
+      <div class="wf-num">1</div>
+      <div class="wf-title">SAISIE</div>
+      <div class="wf-sub">Le Formateur saisit les absences sur son téléphone et finalise la séance</div>
+    </div>
+    <div class="wf-arrow">›</div>
+    <div class="wf-step s2">
+      <div class="wf-num">2</div>
+      <div class="wf-title">VALIDATION</div>
+      <div class="wf-sub">Le Gestionnaire vérifie et valide les absences sur son bureau</div>
+    </div>
+    <div class="wf-arrow">›</div>
+    <div class="wf-step s3">
+      <div class="wf-num">3</div>
+      <div class="wf-title">JUSTIFICATION</div>
+      <div class="wf-sub">La Scolarité justifie les absences et génère les rapports PDF</div>
+    </div>
+  </div>
+
+  <br>
+
+  <div class="page-title" style="margin-top:10px;">Résumé des rôles</div>
+  <table class="role-table">
+    <tr>
+      <th>Rôle</th>
+      <th>Application utilisée</th>
+      <th>Responsabilité</th>
+    </tr>
+    <tr>
+      <td><span class="badge-role badge-purple">Formateur</span></td>
+      <td>📱 Mobile uniquement</td>
+      <td>Saisir les absences et verrouiller la séance</td>
+    </tr>
+    <tr>
+      <td><span class="badge-role badge-green">Gestionnaire</span></td>
+      <td>🖥️ Desktop (Scolarité)</td>
+      <td>Justifier les absences et imprimer les rapports</td>
+    </tr>
+    <tr>
+      <td><span class="badge-role badge-blue">Directeur</span></td>
+      <td>🖥️ Desktop (Administration)</td>
+      <td>Superviser, gérer les formateurs et les emplois du temps</td>
+    </tr>
+  </table>
+
+  <div class="note-box" style="margin-top:20px;">
+    <strong>⚠ Important :</strong> Une connexion Internet (WiFi ou données mobiles) est nécessaire en permanence pour la synchronisation entre les appareils.
+  </div>
+
+  <div class="page-footer">
+    <span>SAS — Guide d'Utilisation</span>
+    <span>ISTA Tertiaire My Rachid — OFPPT</span>
+    <span>Page 2</span>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║       PAGE 3 — DIRECTEUR : ACCUEIL + FORMATEURS     ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page">
+  <div class="section-header blue">
+    <div class="icon">🔵</div>
+    <div>
+      <h2>Application Desktop — Directeur</h2>
+      <p>Supervision globale : formateurs, emploi du temps, sécurité, notes</p>
+    </div>
+  </div>
+
+  <!-- Screen 1 -->
+  <div class="screen-block">
+    <div class="screen-label blue-label">
+      <div class="page-num" style="background:#1565c0;">1</div>
+      Page d'Accueil — Absences Hebdomadaires par Groupe
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Accueil Directeur</div>
+      <div class="ph-sub">Tableau des absences hebdomadaires par groupe</div>
+    </div>
+    <div class="description">
+      <p>Cette page affiche un <strong>résumé visuel des absences de la semaine</strong> pour chaque groupe de l'établissement. Le directeur peut naviguer entre les semaines grâce aux boutons ‹ et ›. Les groupes avec le plus d'absences apparaissent en haut avec leur nombre de séances d'absence en rouge.</p>
+    </div>
+  </div>
+
+  <!-- Screen 2 -->
+  <div class="screen-block">
+    <div class="screen-label blue-label">
+      <div class="page-num" style="background:#1565c0;">2</div>
+      Liste des Formateurs — Gestion des comptes
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Liste des Formateurs</div>
+      <div class="ph-sub">Tableau avec matricule, prénom, nom, email et actions</div>
+    </div>
+    <div class="steps">
+      <ol>
+        <li>Utilisez la <strong>barre de recherche</strong> pour trouver un formateur rapidement.</li>
+        <li>Cliquez sur <strong>« + Ajouter »</strong> pour créer un nouveau compte formateur.</li>
+        <li>Cliquez sur <strong>« Importer »</strong> pour ajouter plusieurs formateurs via un fichier Excel.</li>
+        <li>Utilisez les boutons <strong>Modifier / Supprimer</strong> pour mettre à jour ou supprimer un compte.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SAS — Guide d'Utilisation</span>
+    <span>Application Desktop — Directeur</span>
+    <span>Page 3</span>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║     PAGE 4 — DIRECTEUR : EMPLOI + MDP + NOTES       ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page">
+  <div class="page-title">Application Desktop — Directeur (suite)</div>
+
+  <!-- Screen 3 -->
+  <div class="screen-block">
+    <div class="screen-label blue-label">
+      <div class="page-num" style="background:#1565c0;">3</div>
+      Import Emploi du Temps (Global) — PDF ou Excel
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Import Emploi du Temps</div>
+      <div class="ph-sub">Page d'importation PDF/Excel avec détection automatique de semaine</div>
+    </div>
+    <div class="steps">
+      <ol>
+        <li>Le système <strong>détecte automatiquement</strong> la semaine à partir du fichier.</li>
+        <li>Choisissez le format : <strong>Fichier PDF (.pdf)</strong> ou <strong>Fichier Excel (.xlsx)</strong>.</li>
+        <li>Cliquez sur <strong>« Parcourir les fichiers »</strong> et sélectionnez votre fichier.</li>
+        <li>Vérifiez l'aperçu puis cliquez <strong>« Enregistrer »</strong> → disponible immédiatement sur les mobiles.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Screen 4 -->
+  <div class="screen-block">
+    <div class="screen-label blue-label">
+      <div class="page-num" style="background:#1565c0;">4</div>
+      Réinitialiser Mots de Passe — Sécurité des comptes
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Réinitialiser Mots de Passe</div>
+      <div class="ph-sub">Liste des formateurs avec leur mot de passe actuel et bouton Réinitialiser</div>
+    </div>
+    <div class="description">
+      <p>Cette page affiche tous les comptes formateurs avec leur mot de passe actuel. Pour réinitialiser le mot de passe d'un formateur (en cas d'oubli), cliquez simplement sur <strong>« Réinitialiser »</strong> en face de son nom.</p>
+    </div>
+  </div>
+
+  <!-- Screen 5 -->
+  <div class="screen-block">
+    <div class="screen-label blue-label">
+      <div class="page-num" style="background:#1565c0;">5</div>
+      Notes Finales — Calcul automatique par stagiaire
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Notes Finales</div>
+      <div class="ph-sub">Tableau des notes /20 calculées automatiquement selon les absences NJ</div>
+    </div>
+    <div class="description">
+      <p>Le système calcule automatiquement la <strong>note finale sur 20</strong> de chaque stagiaire en déduisant <strong>0,5 point par 5h d'absence non justifiée</strong>. La page affiche le nombre de sessions d'absence, le total d'heures NJ et la note résultante par groupe et par stagiaire.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SAS — Guide d'Utilisation</span>
+    <span>Application Desktop — Directeur</span>
+    <span>Page 4</span>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║   PAGE 5 — GESTIONNAIRE : ACCUEIL + SAISIE ABSENCE  ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page">
+  <div class="section-header green">
+    <div class="icon">🟢</div>
+    <div>
+      <h2>Application Desktop — Gestionnaire (Scolarité)</h2>
+      <p>Justification des absences, gestion des stagiaires, rapports PDF</p>
+    </div>
+  </div>
+
+  <!-- Screen 1 -->
+  <div class="screen-block">
+    <div class="screen-label green-label">
+      <div class="page-num" style="background:#2e7d32;">1</div>
+      Page d'Accueil — Rapport Hebdomadaire des Absences
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Accueil Gestionnaire</div>
+      <div class="ph-sub">Compteurs (stagiaires absents, total heures NJ, groupes) + tableau avec bouton Justifier</div>
+    </div>
+    <div class="description">
+      <p>La page d'accueil affiche <strong>3 indicateurs clés</strong> en temps réel : le nombre de stagiaires absents cette semaine, le total d'heures d'absence non justifiées (NJ), et le nombre de groupes concernés. En dessous, un tableau liste chaque stagiaire absent avec ses heures. Cliquez sur <strong>« Justifier »</strong> pour marquer une absence comme justifiée.</p>
+    </div>
+  </div>
+
+  <!-- Screen 2 -->
+  <div class="screen-block">
+    <div class="screen-label green-label">
+      <div class="page-num" style="background:#2e7d32;">2</div>
+      Saisie Absence — Table d'Absence Globale
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Saisie Absence (Table Globale)</div>
+      <div class="ph-sub">Tableau mensuel avec notes /10, /15, /20 et sanctions automatiques</div>
+    </div>
+    <div class="steps">
+      <ol>
+        <li>Filtrez par <strong>année</strong> et par <strong>groupe</strong> à l'aide des menus déroulants.</li>
+        <li>Le tableau affiche les absences <strong>mois par mois</strong> (Sep à Juin) pour chaque stagiaire.</li>
+        <li>Les <strong>notes finales</strong> (/10, /15, /20) et les <strong>sanctions</strong> sont calculées automatiquement.</li>
+        <li>Utilisez <strong>« Exporter vers Excel »</strong> pour télécharger le tableau complet.</li>
+      </ol>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SAS — Guide d'Utilisation</span>
+    <span>Application Desktop — Gestionnaire</span>
+    <span>Page 5</span>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║   PAGE 6 — GESTIONNAIRE : STAGIAIRES + IMPORT + PDF ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page">
+  <div class="page-title">Application Desktop — Gestionnaire (suite)</div>
+
+  <!-- Screen 3 -->
+  <div class="screen-block">
+    <div class="screen-label green-label">
+      <div class="page-num" style="background:#2e7d32;">3</div>
+      Gestionnaire Stagiaire — Gestion des groupes et stagiaires
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Gestionnaire Stagiaire</div>
+      <div class="ph-sub">Liste des 35 groupes avec les stagiaires et options Éditer / Transférer / Supprimer</div>
+    </div>
+    <div class="steps">
+      <ol>
+        <li>Filtrez par <strong>année</strong> ou par <strong>groupe</strong> pour trouver un stagiaire.</li>
+        <li>Cliquez sur <strong>« + Ajouter un stagiaire »</strong> pour créer un nouveau dossier.</li>
+        <li>Utilisez <strong>« Transférer »</strong> pour déplacer un stagiaire vers un autre groupe.</li>
+        <li>Cliquez sur <strong>« Éditer le groupe »</strong> pour modifier le nom ou l'année d'un groupe.</li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Screen 4 -->
+  <div class="screen-block">
+    <div class="screen-label green-label">
+      <div class="page-num" style="background:#2e7d32;">4</div>
+      Import Étudiants (Excel) — Importation groupée
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Import Étudiants Excel</div>
+      <div class="ph-sub">Zone de glisser-déposer avec aperçu de la structure Excel requise</div>
+    </div>
+    <div class="description">
+      <p>Utilisé <strong>une seule fois en début d'année</strong> pour importer la liste des stagiaires. Préparez votre fichier Excel avec les colonnes : <em>Matricule, Nom, Prénom, Groupe, Année d'étude</em>. Cliquez sur <strong>« Parcourir les fichiers »</strong> ou glissez-déposez votre fichier .xlsx dans la zone prévue.</p>
+    </div>
+  </div>
+
+  <!-- Screen 5 -->
+  <div class="screen-block">
+    <div class="screen-label green-label">
+      <div class="page-num" style="background:#2e7d32;">5</div>
+      Imprimer PDF — Génération des feuilles d'absence par lot
+    </div>
+    <div class="screenshot-placeholder desktop-ph">
+      <div class="ph-icon">📸</div>
+      <div class="ph-text">Capture d'écran — Imprimer PDF</div>
+      <div class="ph-sub">Page de génération par lot avec indicateur de semaine actuelle</div>
+    </div>
+    <div class="description">
+      <p>Cette page génère en <strong>un seul clic</strong> les feuilles d'absence de <em>tous les groupes</em> enregistrés dans le système pour la semaine en cours. Les présences et absences sont automatiquement cochées selon la base de données. Cliquez sur la zone verte <strong>« Génération par lot »</strong> pour lancer l'impression.</p>
+    </div>
+  </div>
+
+  <div class="page-footer">
+    <span>SAS — Guide d'Utilisation</span>
+    <span>Application Desktop — Gestionnaire</span>
+    <span>Page 6</span>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║     PAGE 7 — FORMATEUR MOBILE (4 ÉCRANS)            ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page">
+  <div class="section-header mobile">
+    <div class="icon">📱</div>
+    <div>
+      <h2>Application Mobile — Formateur</h2>
+      <p>Saisie des absences en temps réel depuis le téléphone</p>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <!-- Mobile Screen 1 -->
+    <div class="screen-block">
+      <div class="screen-label mobile-label">
+        <div class="page-num" style="background:#283593;">1</div>
+        Tableau de Bord — Accueil
+      </div>
+      <div class="screenshot-placeholder mobile-ph">
+        <div class="ph-icon">📸</div>
+        <div class="ph-text">Capture — Accueil Formateur</div>
+        <div class="ph-sub">Date + cours du jour</div>
+      </div>
+      <div class="description">
+        <p>L'écran d'accueil affiche la <strong>date du jour</strong>, le numéro de semaine, et la liste <strong>« Mes Cours d'Aujourd'hui »</strong>. Si aucun cours n'est programmé ce jour, le message « Aucun cours programmé » s'affiche.</p>
+      </div>
+    </div>
+
+    <!-- Mobile Screen 2 -->
+    <div class="screen-block">
+      <div class="screen-label mobile-label">
+        <div class="page-num" style="background:#283593;">2</div>
+        Menu de Navigation
+      </div>
+      <div class="screenshot-placeholder mobile-ph">
+        <div class="ph-icon">📸</div>
+        <div class="ph-text">Capture — Menu Formateur</div>
+        <div class="ph-sub">Mon Profil / Mon Emploi / Déconnexion</div>
+      </div>
+      <div class="description">
+        <p>Appuyez sur l'icône <strong>☰</strong> (en haut à droite) pour ouvrir le menu. Vous y trouvez : <strong>Mon Profil</strong> (modifier vos infos), <strong>Mon Emploi</strong> (voir votre emploi du temps complet), et <strong>Déconnexion</strong>.</p>
+      </div>
+    </div>
+
+    <!-- Mobile Screen 3 -->
+    <div class="screen-block">
+      <div class="screen-label mobile-label">
+        <div class="page-num" style="background:#283593;">3</div>
+        Mon Emploi du Temps
+      </div>
+      <div class="screenshot-placeholder mobile-ph">
+        <div class="ph-icon">📸</div>
+        <div class="ph-text">Capture — Emploi du Temps</div>
+        <div class="ph-sub">Planning hebdomadaire Lun–Sam par groupe et séance</div>
+      </div>
+      <div class="description">
+        <p>Affiche votre emploi du temps complet pour <strong>cette semaine</strong> ou la <strong>semaine prochaine</strong>. Chaque cours indique : le groupe, la salle, le type (Présentielle) et les créneaux (SE1+SE2, SE3+SE4...).</p>
+      </div>
+    </div>
+
+    <!-- Mobile Screen 4 -->
+    <div class="screen-block">
+      <div class="screen-label mobile-label">
+        <div class="page-num" style="background:#283593;">4</div>
+        Mon Profil
+      </div>
+      <div class="screenshot-placeholder mobile-ph">
+        <div class="ph-icon">📸</div>
+        <div class="ph-text">Capture — Mon Profil</div>
+        <div class="ph-sub">Nom, matricule, email, modification du mot de passe</div>
+      </div>
+      <div class="description">
+        <p>Consultez vos informations personnelles (nom, matricule, email). Vous pouvez <strong>changer votre mot de passe</strong> en saisissant le mot de passe actuel et le nouveau, puis cliquez sur <strong>« Enregistrer les modifications »</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="note-box">
+    <strong>Comment saisir les absences :</strong> Depuis l'accueil, appuyez sur un cours programmé → cochez les stagiaires absents → appuyez sur <strong>« Finaliser &amp; Envoyer »</strong>. La séance sera automatiquement verrouillée après envoi.
+  </div>
+
+  <div class="page-footer">
+    <span>SAS — Guide d'Utilisation</span>
+    <span>Application Mobile — Formateur</span>
+    <span>Page 7</span>
+  </div>
+</div>
+
+
+<!-- ╔══════════════════════════════════════════════════════╗
+     ║              PAGE 8 — FAQ & CONTACTS                ║
+     ╚══════════════════════════════════════════════════════╝ -->
+<div class="page">
+  <div class="page-title">Questions Fréquentes (FAQ)</div>
+
+  <div style="display:flex; flex-direction:column; gap:14px; margin-bottom:24px;">
+
+    <div style="background:#f8f9ff; border-radius:10px; padding:14px 16px; border-left:4px solid #1565c0;">
+      <div style="font-weight:700; font-size:12.5px; color:#1565c0; margin-bottom:6px;">❓ Je me suis trompé dans la saisie. Que faire ?</div>
+      <div style="font-size:12px; color:#424242;">Soumettez une <strong>Demande de Déverrouillage</strong> depuis votre tableau de bord Formateur. Le Gestionnaire ou le Directeur doit l'approuver avant que vous puissiez modifier la séance.</div>
+    </div>
+
+    <div style="background:#f8fff8; border-radius:10px; padding:14px 16px; border-left:4px solid #2e7d32;">
+      <div style="font-weight:700; font-size:12.5px; color:#2e7d32; margin-bottom:6px;">❓ L'application mobile ne montre pas mon emploi du temps. Pourquoi ?</div>
+      <div style="font-size:12px; color:#424242;">L'emploi du temps doit d'abord être importé par le Directeur via l'application Desktop (Import Emploi Global). Contactez votre administration.</div>
+    </div>
+
+    <div style="background:#f8f9ff; border-radius:10px; padding:14px 16px; border-left:4px solid #1565c0;">
+      <div style="font-weight:700; font-size:12.5px; color:#1565c0; margin-bottom:6px;">❓ Les absences n'apparaissent pas sur le Desktop. Pourquoi ?</div>
+      <div style="font-size:12px; color:#424242;">Les absences n'apparaissent sur le Desktop qu'<strong>après la validation</strong> par le Gestionnaire (Étape 2). Vérifiez si la validation a bien été effectuée.</div>
+    </div>
+
+    <div style="background:#f8fff8; border-radius:10px; padding:14px 16px; border-left:4px solid #2e7d32;">
+      <div style="font-weight:700; font-size:12.5px; color:#2e7d32; margin-bottom:6px;">❓ J'ai oublié mon mot de passe. Que faire ?</div>
+      <div style="font-size:12px; color:#424242;">Contactez le <strong>Directeur</strong> de l'établissement. Il peut réinitialiser votre mot de passe depuis la page <em>« Réinitialiser Mot de Passe »</em> de l'application Desktop.</div>
+    </div>
+
+    <div style="background:#fffde7; border-radius:10px; padding:14px 16px; border-left:4px solid #f9a825;">
+      <div style="font-weight:700; font-size:12.5px; color:#e65100; margin-bottom:6px;">❓ Les données sont-elles sauvegardées en cas de panne ?</div>
+      <div style="font-size:12px; color:#424242;">Oui. Toutes les données sont sauvegardées <strong>automatiquement dans le cloud</strong>. Aucune donnée n'est perdue en cas de coupure d'électricité ou de panne téléphone.</div>
+    </div>
+
+    <div style="background:#fffde7; border-radius:10px; padding:14px 16px; border-left:4px solid #f9a825;">
+      <div style="font-weight:700; font-size:12.5px; color:#e65100; margin-bottom:6px;">❓ Comment sont calculées les sanctions disciplinaires ?</div>
+      <div style="font-size:12px; color:#424242;">Le système déduit automatiquement <strong>0,5 point par 5h d'absence non justifiée</strong> de la note /20. Les sanctions (1ère mise en garde, 2ème mise en garde...) sont appliquées automatiquement selon les seuils réglementaires.</div>
+    </div>
+
+  </div>
+
+  <div style="background:linear-gradient(135deg,#1565c0,#0288d1); border-radius:12px; padding:20px 24px; color:white; text-align:center;">
+    <div style="font-size:14px; font-weight:700; margin-bottom:6px;">📞 Contact & Support Technique</div>
+    <div style="font-size:12px; opacity:0.9;">Développeur : <strong>Adil Lamkadem</strong></div>
+    <div style="font-size:12px; opacity:0.9;">GitHub : <strong>github.com/LAMKADEMADIL</strong></div>
+    <div style="font-size:12px; opacity:0.85; margin-top:8px;">ISTA Tertiaire My Rachid — OFPPT</div>
+  </div>
+
+  <div class="page-footer">
+    <span>SAS — Guide d'Utilisation</span>
+    <span>© 2026 — Tous droits réservés</span>
+    <span>Page 8</span>
+  </div>
+</div>
+
+
+<!-- ── BOUTON IMPRESSION ── -->
+<button class="print-btn no-print" onclick="window.print()">
+  🖨️ Imprimer / Enregistrer en PDF
+</button>
+
+</body>
+</html>

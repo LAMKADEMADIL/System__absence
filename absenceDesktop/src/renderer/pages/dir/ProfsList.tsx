@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Modal, Spinner, Alert, Table, Form, InputGroup, Row, Col } from 'react-bootstrap';
 import DirLayout from '../../layouts/DirLayout';
+import { useAppSettings } from '../../context/AppSettingsContext';
 import {
   getInstructors,
   deleteInstructor,
@@ -22,6 +23,7 @@ interface Prof {
 
 function ProfsListPage() {
   const navigate = useNavigate();
+  const { appName } = useAppSettings();
   const [profs, setProfs] = useState<Prof[]>([]);
   const [filteredProfs, setFilteredProfs] = useState<Prof[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -289,7 +291,7 @@ function ProfsListPage() {
         </Modal>
 
         <div className="text-center mt-5 pb-4 text-muted small" style={{ opacity: 0.7 }}>
-          <p>© 2026 Système de Gestion d'Absence - ISTA Tertiaire My Rachid</p>
+          <p>© 2026 {appName} - ISTA Tertiaire My Rachid</p>
         </div>
 
         <style>{`

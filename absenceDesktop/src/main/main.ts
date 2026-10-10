@@ -238,7 +238,7 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
-    title: "Système de suivi d'absence",
+    title: "Gestion de Présence des stagiaires",
     icon: appIcon,
     webPreferences: {
       preload: preloadPath,

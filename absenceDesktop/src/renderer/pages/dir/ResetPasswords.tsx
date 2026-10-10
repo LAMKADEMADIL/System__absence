@@ -18,8 +18,10 @@ import {
   Instructor,
 } from "../../firebase/firestoreService";
 import DirLayout from "../../layouts/DirLayout";
+import { useAppSettings } from "../../context/AppSettingsContext";
 
 export default function ResetPasswords() {
+  const { appName } = useAppSettings();
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [filteredInstructors, setFilteredInstructors] = useState<Instructor[]>(
     [],
@@ -682,7 +684,7 @@ export default function ResetPasswords() {
           className="text-center mt-5 pb-4 text-muted small"
           style={{ opacity: 0.7 }}
         >
-          <p>{"© 2026 Système de Gestion d'Absence - ISTA Tertiaire My Rachid"}</p>
+          <p>{`© 2026 ${appName} - ISTA Tertiaire My Rachid`}</p>
         </div>
 
         <style>{`

@@ -16,12 +16,13 @@ import DirAb from './pages/dir/DirAb';
 import Profile from './pages/dir/Profile';
 import ResetPasswords from './pages/dir/ResetPasswords';
 import WeeklyScheduleImporter from './pages/manager/WeeklyScheduleImporter';
+import { AppSettingsProvider } from './context/AppSettingsContext';
 
 export default function App() {
   const isBrowser = !(window as any).electron && !navigator.userAgent.includes('Electron');
 
   return (
-    <>
+    <AppSettingsProvider>
       {isBrowser && (
         <div className="bg-danger text-white text-center py-2 sticky-top shadow-sm" style={{ zIndex: 9999, fontSize: '0.9rem' }}>
           <strong>⚠️ Mode Navigateur Détecté :</strong> Les fonctions de gestion (Ajout/Suppression/Email) ne fonctionneront pas. Utilisez l&apos;application Desktop.
@@ -45,6 +46,6 @@ export default function App() {
         <Route path="/reset-passwords" element={<ResetPasswords />} />
       </Routes>
       </Router>
-    </>
+    </AppSettingsProvider>
   );
 }

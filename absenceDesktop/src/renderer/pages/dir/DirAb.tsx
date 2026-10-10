@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Badge, Spinner, Alert, Card, Accordion, Table, Form, Container, InputGroup } from 'react-bootstrap';
 import DirLayout from '../../layouts/DirLayout';
+import { useAppSettings } from '../../context/AppSettingsContext';
 import ExcelFinalNotesExport from '../../components/ExcelFinalNotesExporter';
 import { getGroupsWithStudentsAndAbsences } from '../../firebase/firestoreService';
 
@@ -31,6 +32,7 @@ type Group = {
 };
 
 function DirAb() {
+  const { appName } = useAppSettings();
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -209,7 +211,7 @@ function DirAb() {
         </div>
 
         <div className="text-center mt-5 pb-4 text-muted small" style={{ opacity: 0.7 }}>
-          <p>© 2026 Système de Gestion d'Absence - ISTA Tertiaire My Rachid</p>
+          <p>© 2026 {appName} - ISTA Tertiaire My Rachid</p>
         </div>
 
         <style>{`

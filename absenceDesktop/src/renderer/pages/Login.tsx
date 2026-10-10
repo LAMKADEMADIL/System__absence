@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Card, Form, Button, Container, Row, Col, Spinner, Alert } from 'react-bootstrap';
 import { loginUser } from '../firebase/authService';
 import Logo from '../assets/Logo_ofppt.png';
+import { useAppSettings } from '../context/AppSettingsContext';
 
 let splashShown = false;
 
 export default function Login() {
+  const { appName } = useAppSettings();
   const [view, setView] = useState<'select' | 'login'>('select');
   const [role, setRole] = useState<'admin' | 'manager'>('admin');
   const [email, setEmail] = useState('');
@@ -106,7 +108,7 @@ export default function Login() {
           <>
             <div className="text-center mb-5 position-relative pt-5">
                <h1 className="fw-900 mb-1" style={{ fontSize: '1.8rem', letterSpacing: '-0.5px', color: '#000000' }}>OFPPT</h1>
-               <h4 className="fw-bold mb-2" style={{ color: '#334155' }}>Système de suivi d'absence</h4>
+               <h4 className="fw-bold mb-2" style={{ color: '#334155' }}>{appName}</h4>
                <p className="text-muted mb-4" style={{ fontWeight: '500', fontSize: '1.1rem' }}>Plateforme de suivi des absences des stagiaires</p>
                <div className="d-inline-block px-4 py-2 rounded-pill shadow-sm mb-4 border" style={{ backgroundColor: 'rgba(255, 255, 255, 0.9)', color: '#1e3a8a', fontSize: '14px', fontWeight: '800', letterSpacing: '0.5px' }}>
                  <span style={{ opacity: 0.8 }}>—</span> La Voie de l'Avenir <span style={{ opacity: 0.8 }}>—</span>

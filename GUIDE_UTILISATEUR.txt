@@ -1,0 +1,329 @@
+================================================================================
+          GUIDE D'UTILISATION — SAS (Suivi d'Absence System)
+          Système de Gestion des Absences — ISTA Tertiaire My Rachid
+================================================================================
+
+Développé par : Adil Lamkadem
+Établissement : ISTA Tertiaire My Rachid — OFPPT
+Version       : 1.0
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                              INTRODUCTION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Le système SAS est une solution numérique complète conçue pour remplacer les
+fiches d'absence papier traditionnelles. Il permet de suivre, valider et
+justifier les absences des stagiaires de manière rapide, sécurisée et sans
+erreur.
+
+Le système est composé de DEUX applications complémentaires :
+
+  ▶  Application Mobile (sur téléphone)   → Pour les Formateurs, Gestionnaires
+                                             et Directeurs
+  ▶  Application Desktop (sur ordinateur) → Pour la Scolarité et l'Administration
+
+Ces deux applications sont connectées en temps réel : toute action effectuée
+sur le téléphone apparaît immédiatement sur l'ordinateur, et vice versa.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    COMMENT FONCTIONNE LE SYSTÈME ?
+                    (Le Flux de Travail en 3 Étapes)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Le système suit un processus strict en 3 étapes pour garantir la fiabilité
+des données :
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  ÉTAPE 1 : SAISIE      →  ÉTAPE 2 : VALIDATION  →  ÉTAPE 3 : JUSTIF.  │
+  │  (Formateur)               (Gestionnaire)            (Scolarité)        │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 1 — Saisie des absences (Formateur, via Mobile)                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. Le formateur ouvre l'application mobile et se connecte.                 │
+│  2. Le système détecte automatiquement le créneau horaire en cours         │
+│     (selon l'emploi du temps importé).                                      │
+│  3. Le formateur coche les stagiaires absents dans sa liste de classe.     │
+│  4. Il clique sur "Finaliser & Envoyer".                                   │
+│  5. La séance est automatiquement VERROUILLÉE — aucune modification       │
+│     n'est possible après cela pour garantir la sécurité des données.      │
+│                                                                             │
+│  [[ INSÉRER ICI : Capture d'écran — Dashboard Formateur ]]                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 2 — Validation (Gestionnaire, via Mobile)                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. Le gestionnaire reçoit une notification sur son téléphone.             │
+│  2. Il consulte la liste des absences soumises par le formateur.           │
+│  3. Il vérifie la cohérence des données.                                   │
+│  4. Il valide la séance → les absences deviennent officielles.             │
+│  5. Si une séance a été verrouillée par erreur, le gestionnaire peut       │
+│     approuver une "Demande de Déverrouillage" soumise par le formateur.   │
+│                                                                             │
+│  [[ INSÉRER ICI : Capture d'écran — Dashboard Gestionnaire ]]             │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ÉTAPE 3 — Justification & Rapports (Scolarité, via Desktop)                 │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  1. Les absences validées apparaissent automatiquement sur l'application   │
+│     Desktop (ordinateur de la scolarité).                                  │
+│  2. Si un stagiaire présente un certificat médical ou une autorisation,    │
+│     l'agent de scolarité marque l'absence comme "Justifiée".               │
+│  3. La scolarité peut générer des rapports PDF prêts à imprimer pour       │
+│     le conseil de discipline ou pour l'administration.                     │
+│                                                                             │
+│  [[ INSÉRER ICI : Capture d'écran — Interface Scolarité Desktop ]]        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      APPLICATION MOBILE — GUIDE PAR RÔLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CONNEXION
+─────────
+  1. Ouvrez l'application sur votre téléphone.
+  2. Entrez votre adresse e-mail et votre mot de passe.
+  3. Appuyez sur "Se connecter".
+  4. Le système vous redirige automatiquement vers votre espace selon votre rôle.
+
+  [[ INSÉRER ICI : Capture d'écran — Écran de connexion ]]
+
+
+════════════════════════════════════════════
+  ESPACE FORMATEUR
+════════════════════════════════════════════
+
+Tableau de bord :
+  • Affiche votre emploi du temps de la journée.
+  • Le créneau horaire actuel est mis en évidence automatiquement.
+
+Comment saisir les absences :
+  1. Appuyez sur le créneau horaire de votre cours.
+  2. Une liste de vos stagiaires s'affiche.
+  3. Cochez les stagiaires absents.
+  4. Vérifiez votre saisie.
+  5. Appuyez sur "Finaliser & Envoyer".
+     ⚠ ATTENTION : Une fois envoyé, vous ne pourrez plus modifier cette séance.
+
+  [[ INSÉRER ICI : Capture d'écran — Saisie des absences ]]
+
+Demande de déverrouillage :
+  • Si vous avez fait une erreur après l'envoi, vous pouvez soumettre une
+    "Demande de Déverrouillage" depuis l'application.
+  • Un gestionnaire ou le directeur devra l'approuver pour vous permettre
+    de corriger les données.
+
+  [[ INSÉRER ICI : Capture d'écran — Formulaire demande déverrouillage ]]
+
+
+════════════════════════════════════════════
+  ESPACE GESTIONNAIRE
+════════════════════════════════════════════
+
+Tableau de bord :
+  • Affiche toutes les séances soumises par les formateurs en attente
+    de validation.
+  • Les nouvelles soumissions sont signalées par une notification.
+
+Fonctionnalités disponibles :
+  ✔ Consulter la liste des absences soumises par séance et par groupe.
+  ✔ Valider une séance (rend les absences officielles).
+  ✔ Consulter et approuver les demandes de déverrouillage des formateurs.
+  ✔ Rappeler les formateurs qui n'ont pas encore soumis leurs absences.
+
+  [[ INSÉRER ICI : Capture d'écran — Dashboard Gestionnaire complet ]]
+
+
+════════════════════════════════════════════
+  ESPACE DIRECTEUR
+════════════════════════════════════════════
+
+Tableau de bord :
+  • Vue globale de l'établissement en temps réel.
+  • Statistiques des absences par groupe et par formateur.
+
+Fonctionnalités disponibles :
+  ✔ Superviser toutes les séances et absences de l'institut.
+  ✔ Approuver les demandes de déverrouillage de haut niveau.
+  ✔ Consulter les rapports statistiques en temps réel.
+
+  [[ INSÉRER ICI : Capture d'écran — Dashboard Directeur ]]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                    APPLICATION DESKTOP — GUIDE D'UTILISATION
+                         (Pour l'équipe de Scolarité)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+L'application Desktop est installée sur l'ordinateur du bureau de scolarité.
+Elle est l'outil principal pour la gestion administrative des absences.
+
+CONNEXION
+─────────
+  1. Lancez l'application depuis le bureau de votre ordinateur.
+  2. Entrez vos identifiants (e-mail + mot de passe).
+  3. Vous accédez à votre espace selon votre rôle (Scolarité ou Directeur).
+
+  [[ INSÉRER ICI : Capture d'écran — Écran de connexion Desktop ]]
+
+
+════════════════════════════════════════════
+  MENU PRINCIPAL — SCOLARITÉ (Gestionnaire)
+════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Menu            │  Description                                     │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  Absences        │  Consulter et justifier les absences validées    │
+  │  Importer Excel  │  Ajouter stagiaires/formateurs via fichier Excel │
+  │  Emploi du temps │  Importer les grilles horaires (PDF ou Excel)    │
+  │  Rapports PDF    │  Générer et imprimer les fiches d'absences       │
+  │  Transferts      │  Visualiser et transférer les données            │
+  │  Déverrouillage  │  Gérer les demandes de déverrouillage            │
+  └─────────────────────────────────────────────────────────────────────┘
+
+
+FONCTIONNALITÉ 1 — Justification des Absences
+──────────────────────────────────────────────
+  1. Allez dans le menu "Absences".
+  2. Sélectionnez le groupe et la semaine.
+  3. La liste des absences validées s'affiche.
+  4. Pour chaque absence, vous pouvez :
+       → La marquer comme "Justifiée" (certificat médical, autorisation...)
+       → La laisser comme "Non Justifiée"
+  5. Les modifications sont sauvegardées automatiquement.
+
+  [[ INSÉRER ICI : Capture d'écran — Page Justification des absences ]]
+
+
+FONCTIONNALITÉ 2 — Importation des Données (Excel)
+────────────────────────────────────────────────────
+  Utilisé UNE SEULE FOIS au début de l'année pour renseigner la base de données.
+
+  1. Préparez votre fichier Excel avec la liste des stagiaires ou des formateurs
+     (fourni par l'OFPPT).
+  2. Allez dans "Importer Excel".
+  3. Cliquez sur "Choisir le fichier" et sélectionnez votre fichier .xlsx.
+  4. Vérifiez l'aperçu qui s'affiche.
+  5. Cliquez sur "Importer" pour enregistrer dans la base de données.
+
+  [[ INSÉRER ICI : Capture d'écran — Page Importation Excel ]]
+
+
+FONCTIONNALITÉ 3 — Importation de l'Emploi du Temps
+─────────────────────────────────────────────────────
+  Permet aux formateurs de voir leur emploi du temps sur l'application mobile.
+
+  1. Allez dans "Emploi du Temps".
+  2. Choisissez le format de votre fichier (PDF ou Excel).
+  3. Sélectionnez le fichier de la grille horaire hebdomadaire.
+  4. Le système analyse automatiquement le fichier et extrait les sessions.
+  5. Vérifiez l'aperçu du planning détecté.
+  6. Cliquez sur "Enregistrer" → l'emploi du temps est immédiatement
+     disponible sur les téléphones des formateurs.
+
+  [[ INSÉRER ICI : Capture d'écran — Page Emploi du Temps ]]
+
+
+FONCTIONNALITÉ 4 — Génération de Rapports PDF
+───────────────────────────────────────────────
+  1. Allez dans "Rapports PDF".
+  2. Sélectionnez le groupe ou le stagiaire concerné.
+  3. Choisissez la période (semaine, mois, ou plage de dates).
+  4. Cliquez sur "Générer le Rapport".
+  5. Le PDF s'affiche à l'écran, prêt à être imprimé ou sauvegardé.
+
+  [[ INSÉRER ICI : Capture d'écran — Rapport PDF généré ]]
+
+
+════════════════════════════════════════════
+  MENU PRINCIPAL — DIRECTEUR
+════════════════════════════════════════════
+
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │  Menu               │  Description                                  │
+  ├─────────────────────────────────────────────────────────────────────┤
+  │  Tableau de bord    │  Vue globale de l'établissement               │
+  │  Liste Formateurs   │  Consulter et gérer les comptes formateurs    │
+  │  Ajouter Formateur  │  Créer un nouveau compte formateur            │
+  │  Absences Globales  │  Statistiques d'absences par groupe           │
+  │  Réinit. Mots Passe │  Réinitialiser le mot de passe d'un formateur│
+  └─────────────────────────────────────────────────────────────────────┘
+
+  [[ INSÉRER ICI : Capture d'écran — Interface Directeur Desktop ]]
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                        QUESTIONS FRÉQUENTES (FAQ)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Q : Je me suis trompé dans la saisie des absences après l'envoi. Que faire ?
+R : Vous devez soumettre une "Demande de Déverrouillage" depuis votre tableau
+    de bord Formateur. Le Gestionnaire ou le Directeur devra approuver votre
+    demande avant que vous puissiez modifier la séance.
+
+Q : L'application mobile ne montre pas mon emploi du temps. Pourquoi ?
+R : L'emploi du temps doit d'abord être importé par la scolarité via
+    l'application Desktop. Contactez votre gestionnaire ou l'équipe
+    de scolarité.
+
+Q : Je ne vois pas les absences sur l'application Desktop alors que le
+    formateur a déjà envoyé. Pourquoi ?
+R : Les absences n'apparaissent sur le Desktop qu'APRÈS la validation
+    par le Gestionnaire (Étape 2). Vérifiez si la validation a été faite.
+
+Q : J'ai oublié mon mot de passe. Que faire ?
+R : Contactez le Directeur de votre établissement. Il peut réinitialiser
+    votre mot de passe depuis l'application Desktop.
+
+Q : Est-ce que les données sont sauvegardées si le téléphone s'éteint ?
+R : Oui. Toutes les données sont sauvegardées automatiquement dans le cloud
+    (Firebase). Aucune donnée n'est perdue en cas de panne ou de coupure.
+
+Q : L'application nécessite-t-elle une connexion Internet permanente ?
+R : Oui, une connexion Internet (WiFi ou données mobiles) est nécessaire
+    pour la synchronisation en temps réel entre les appareils.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                           RÉSUMÉ DES RÔLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌──────────────────┬───────────────────────┬──────────────────────────────┐
+  │ Rôle             │ Outil utilisé          │ Responsabilité principale    │
+  ├──────────────────┼───────────────────────┼──────────────────────────────┤
+  │ Formateur        │ Application Mobile    │ Saisir les absences          │
+  │ Gestionnaire     │ Application Mobile    │ Valider les absences         │
+  │ Directeur        │ Mobile + Desktop      │ Superviser & administrer     │
+  │ Scolarité        │ Application Desktop   │ Justifier & générer rapports │
+  └──────────────────┴───────────────────────┴──────────────────────────────┘
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                            CONTACT & SUPPORT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  En cas de problème technique, veuillez contacter le développeur :
+
+  Développeur : Adil Lamkadem
+  GitHub      : https://github.com/LAMKADEMADIL
+  Institut    : ISTA Tertiaire My Rachid — OFPPT
+
+================================================================================
+                   © 2026 SAS — Tous droits réservés
+                   ISTA Tertiaire My Rachid — OFPPT
+================================================================================

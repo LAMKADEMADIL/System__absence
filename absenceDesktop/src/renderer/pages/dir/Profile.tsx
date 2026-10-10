@@ -1,19 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Card, Form, Button, Row, Col, Alert, Modal } from 'react-bootstrap';
 import { updateUserProfile, updateUserPassword, updateUserEmail, reauthenticateUser, getCurrentUser } from '../../firebase/authService';
+import { useAppSettings } from '../../context/AppSettingsContext';
+import { DEFAULT_APP_NAME } from '../../firebase/firestoreService';
 import DirLayout from '../../layouts/DirLayout';
 import ManagerLayout from '../../layouts/ManagerLayout';
 
 export default function Profile() {
   const activeUser = getCurrentUser();
+  const { appName, saveAppName, resetAppName } = useAppSettings();
   const [name, setName] = useState(activeUser?.name || '');
   const [email, setEmail] = useState(activeUser?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [customAppName, setCustomAppName] = useState(appName);
+  const [savingAppName, setSavingAppName] = useState(false);
+  const [appNameSuccess, setAppNameSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  useEffect(() => {
+    setCustomAppName(appName);
+  }, [appName]);
 
   if (!activeUser) return <Alert variant="danger">Utilisateur non connecté.</Alert>;
 
@@ -26,6 +36,37 @@ export default function Profile() {
   const badgeText = isManager ? '#166534' : '#1e40af';
   const focusGlow = isManager ? 'rgba(22, 163, 74, 0.1)' : 'rgba(37, 99, 235, 0.1)';
 
+  const handleSaveAppNameOnly = async () => {
+    if (!customAppName.trim()) return;
+    setSavingAppName(true);
+    setAppNameSuccess(false);
+    setError(null);
+    try {
+      await saveAppName(customAppName.trim());
+      setAppNameSuccess(true);
+      setTimeout(() => setAppNameSuccess(false), 4000);
+    } catch (err: any) {
+      setError("Erreur lors de la mise à jour du nom de l'application : " + (err.message || 'Erreur inconnue'));
+    } finally {
+      setSavingAppName(false);
+    }
+  };
+
+  const handleResetAppName = async () => {
+    setSavingAppName(true);
+    setAppNameSuccess(false);
+    setError(null);
+    try {
+      await resetAppName();
+      setCustomAppName(DEFAULT_APP_NAME);
+      setAppNameSuccess(true);
+      setTimeout(() => setAppNameSuccess(false), 4000);
+    } catch (err: any) {
+      setError("Erreur lors de la réinitialisation du nom : " + (err.message || 'Erreur inconnue'));
+    } finally {
+      setSavingAppName(false);
+    }
+  };
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +94,10 @@ export default function Profile() {
           throw new Error('Les mots de passe ne correspondent pas.');
         }
         await updateUserPassword(password);
+      }
+
+      if (customAppName.trim() && customAppName.trim() !== appName) {
+        await saveAppName(customAppName.trim());
       }
 
       setShowSuccessModal(true);
@@ -203,6 +248,73 @@ export default function Profile() {
                         </Col>
                       </Row>
                       <small className="text-muted mt-2 d-block">Minimum 6 caractères</small>
+                    </div>
+
+                    {/* Section 3: Paramètres de l'Application (Configuration Globale) */}
+                    <div className="mb-4 pt-4 border-top">
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="text-dark fw-bold mb-0 d-flex align-items-center">
+                          <span className="me-2 d-inline-block" style={{ width: '4px', height: '18px', backgroundColor: '#6366f1', borderRadius: '2px' }}></span>
+                          Paramètres de l'Application
+                        </h5>
+                        <span className="badge px-3 py-1 rounded-pill fw-bold" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.8rem' }}>
+                          Configuration Globale
+                        </span>
+                      </div>
+                      
+                      <p className="text-muted small mb-3">
+                        Personnalisez le nom du système affiché sur l'application, l'écran de connexion et les barres de navigation.
+                      </p>
+
+                      <Form.Group className="mb-3">
+                        <Form.Label className="text-dark small fw-bold mb-2">Nom de l'application</Form.Label>
+                        <div className="d-flex gap-2">
+                          <Form.Control 
+                            type="text"
+                            placeholder="ex: Gestion de Présence des stagiaires"
+                            className="py-2 px-3 border-light-subtle shadow-none bg-light bg-opacity-50 focus-glow flex-grow-1"
+                            value={customAppName}
+                            onChange={(e) => setCustomAppName(e.target.value)}
+                            style={{ borderRadius: '12px' }}
+                          />
+                          <Button 
+                            type="button"
+                            variant="primary"
+                            onClick={handleSaveAppNameOnly}
+                            disabled={savingAppName || !customAppName.trim()}
+                            className="px-4 fw-bold d-flex align-items-center justify-content-center text-white border-0 shadow-sm"
+                            style={{ borderRadius: '12px', backgroundColor: '#2563eb', whiteSpace: 'nowrap' }}
+                          >
+                            {savingAppName ? 'Enregistrement...' : 'Appliquer'}
+                          </Button>
+                        </div>
+                      </Form.Group>
+
+                      {/* Live Preview & Reset */}
+                      <div className="p-3 rounded-3 bg-light border border-light-subtle d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
+                        <div>
+                          <small className="text-muted d-block fw-semibold" style={{ fontSize: '0.78rem' }}>Aperçu actuel dans le système :</small>
+                          <span className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>{customAppName || DEFAULT_APP_NAME}</span>
+                        </div>
+                        <Button 
+                          type="button"
+                          variant="outline-secondary" 
+                          size="sm"
+                          className="rounded-pill px-3 py-1 fw-semibold"
+                          onClick={handleResetAppName}
+                          disabled={savingAppName}
+                          style={{ fontSize: '0.8rem' }}
+                        >
+                          Rétablir par défaut
+                        </Button>
+                      </div>
+
+                      {appNameSuccess && (
+                        <Alert variant="success" className="py-2 px-3 mt-3 border-0 shadow-sm rounded-3 small fw-bold d-flex align-items-center gap-2">
+                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                          <span>Le nom de l'application a été mis à jour avec succès sur tout le système !</span>
+                        </Alert>
+                      )}
                     </div>
 
                     <div className="d-grid mt-5 pt-2">

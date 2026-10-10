@@ -1013,3 +1013,83 @@ export const deleteWeeklySchedule = async (weekRange: string): Promise<void> => 
   snap.docs.forEach((d) => batch.delete(d.ref));
   await batch.commit();
 };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PARAMÈTRES DE L'APPLICATION (APP SETTINGS)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export const DEFAULT_APP_NAME = "Gestion de Présence des stagiaires";
+
+export interface AppSettings {
+  appName: string;
+  updatedAt?: any;
+}
+
+export const getAppSettings = async (): Promise<AppSettings> => {
+  try {
+    const docRef = doc(db, 'settings', 'general');
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const data = docSnap.data();
+      const appName = data.appName?.trim() || DEFAULT_APP_NAME;
+      localStorage.setItem('app_name', appName);
+      return { appName, updatedAt: data.updatedAt };
+    }
+  } catch (error) {
+    console.warn("Could not fetch app settings from Firestore:", error);
+  }
+  const cached = localStorage.getItem('app_name') || DEFAULT_APP_NAME;
+  return { appName: cached };
+};
+
+export const updateAppSettings = async (newSettings: { appName: string }): Promise<void> => {
+  const cleanName = newSettings.appName?.trim() || DEFAULT_APP_NAME;
+  localStorage.setItem('app_name', cleanName);
+  document.title = cleanName;
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('app_name_updated', { detail: { appName: cleanName } }));
+  }
+
+  const docRef = doc(db, 'settings', 'general');
+  await setDoc(
+    docRef,
+    {
+      appName: cleanName,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+};
+
+export const subscribeAppSettings = (callback: (settings: AppSettings) => void): (() => void) => {
+  try {
+    const docRef = doc(db, 'settings', 'general');
+    return onSnapshot(
+      docRef,
+      (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const appName = data.appName?.trim() || DEFAULT_APP_NAME;
+          localStorage.setItem('app_name', appName);
+          document.title = appName;
+          callback({ appName, updatedAt: data.updatedAt });
+        } else {
+          const cached = localStorage.getItem('app_name') || DEFAULT_APP_NAME;
+          callback({ appName: cached });
+        }
+      },
+      (error) => {
+        console.warn("Error subscribing to app settings:", error);
+        const cached = localStorage.getItem('app_name') || DEFAULT_APP_NAME;
+        callback({ appName: cached });
+      }
+    );
+  } catch (err) {
+    console.warn("Snapshot subscribe error:", err);
+    const cached = localStorage.getItem('app_name') || DEFAULT_APP_NAME;
+    callback({ appName: cached });
+    return () => {};
+  }
+};
+
