@@ -96,7 +96,7 @@ export default function Profile() {
         await updateUserPassword(password);
       }
 
-      if (customAppName.trim() && customAppName.trim() !== appName) {
+      if (!isManager && customAppName.trim() && customAppName.trim() !== appName) {
         await saveAppName(customAppName.trim());
       }
 
@@ -250,72 +250,74 @@ export default function Profile() {
                       <small className="text-muted mt-2 d-block">Minimum 6 caractères</small>
                     </div>
 
-                    {/* Section 3: Paramètres de l'Application (Configuration Globale) */}
-                    <div className="mb-4 pt-4 border-top">
-                      <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="text-dark fw-bold mb-0 d-flex align-items-center">
-                          <span className="me-2 d-inline-block" style={{ width: '4px', height: '18px', backgroundColor: '#6366f1', borderRadius: '2px' }}></span>
-                          Paramètres de l'Application
-                        </h5>
-                        <span className="badge px-3 py-1 rounded-pill fw-bold" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.8rem' }}>
-                          Configuration Globale
-                        </span>
-                      </div>
-                      
-                      <p className="text-muted small mb-3">
-                        Personnalisez le nom du système affiché sur l'application, l'écran de connexion et les barres de navigation.
-                      </p>
+                    {/* Section 3: Paramètres de l'Application (Visible uniquement pour le Directeur) */}
+                    {!isManager && (
+                      <div className="mb-4 pt-4 border-top">
+                        <div className="d-flex justify-content-between align-items-center mb-3">
+                          <h5 className="text-dark fw-bold mb-0 d-flex align-items-center">
+                            <span className="me-2 d-inline-block" style={{ width: '4px', height: '18px', backgroundColor: '#6366f1', borderRadius: '2px' }}></span>
+                            Paramètres de l'Application
+                          </h5>
+                          <span className="badge px-3 py-1 rounded-pill fw-bold" style={{ backgroundColor: '#e0e7ff', color: '#4338ca', fontSize: '0.8rem' }}>
+                            Configuration Globale
+                          </span>
+                        </div>
+                        
+                        <p className="text-muted small mb-3">
+                          Personnalisez le nom du système affiché sur l'application, l'écran de connexion et les barres de navigation.
+                        </p>
 
-                      <Form.Group className="mb-3">
-                        <Form.Label className="text-dark small fw-bold mb-2">Nom de l'application</Form.Label>
-                        <div className="d-flex gap-2">
-                          <Form.Control 
-                            type="text"
-                            placeholder="ex: Gestion de Présence des stagiaires"
-                            className="py-2 px-3 border-light-subtle shadow-none bg-light bg-opacity-50 focus-glow flex-grow-1"
-                            value={customAppName}
-                            onChange={(e) => setCustomAppName(e.target.value)}
-                            style={{ borderRadius: '12px' }}
-                          />
+                        <Form.Group className="mb-3">
+                          <Form.Label className="text-dark small fw-bold mb-2">Nom de l'application</Form.Label>
+                          <div className="d-flex gap-2">
+                            <Form.Control 
+                              type="text"
+                              placeholder="ex: Gestion de Présence des stagiaires"
+                              className="py-2 px-3 border-light-subtle shadow-none bg-light bg-opacity-50 focus-glow flex-grow-1"
+                              value={customAppName}
+                              onChange={(e) => setCustomAppName(e.target.value)}
+                              style={{ borderRadius: '12px' }}
+                            />
+                            <Button 
+                              type="button"
+                              variant="primary"
+                              onClick={handleSaveAppNameOnly}
+                              disabled={savingAppName || !customAppName.trim()}
+                              className="px-4 fw-bold d-flex align-items-center justify-content-center text-white border-0 shadow-sm"
+                              style={{ borderRadius: '12px', backgroundColor: '#2563eb', whiteSpace: 'nowrap' }}
+                            >
+                              {savingAppName ? 'Enregistrement...' : 'Appliquer'}
+                            </Button>
+                          </div>
+                        </Form.Group>
+
+                        {/* Live Preview & Reset */}
+                        <div className="p-3 rounded-3 bg-light border border-light-subtle d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
+                          <div>
+                            <small className="text-muted d-block fw-semibold" style={{ fontSize: '0.78rem' }}>Aperçu actuel dans le système :</small>
+                            <span className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>{customAppName || DEFAULT_APP_NAME}</span>
+                          </div>
                           <Button 
                             type="button"
-                            variant="primary"
-                            onClick={handleSaveAppNameOnly}
-                            disabled={savingAppName || !customAppName.trim()}
-                            className="px-4 fw-bold d-flex align-items-center justify-content-center text-white border-0 shadow-sm"
-                            style={{ borderRadius: '12px', backgroundColor: '#2563eb', whiteSpace: 'nowrap' }}
+                            variant="outline-secondary" 
+                            size="sm"
+                            className="rounded-pill px-3 py-1 fw-semibold"
+                            onClick={handleResetAppName}
+                            disabled={savingAppName}
+                            style={{ fontSize: '0.8rem' }}
                           >
-                            {savingAppName ? 'Enregistrement...' : 'Appliquer'}
+                            Rétablir par défaut
                           </Button>
                         </div>
-                      </Form.Group>
 
-                      {/* Live Preview & Reset */}
-                      <div className="p-3 rounded-3 bg-light border border-light-subtle d-flex flex-wrap justify-content-between align-items-center gap-2 mt-2">
-                        <div>
-                          <small className="text-muted d-block fw-semibold" style={{ fontSize: '0.78rem' }}>Aperçu actuel dans le système :</small>
-                          <span className="fw-bold text-dark" style={{ fontSize: '0.95rem' }}>{customAppName || DEFAULT_APP_NAME}</span>
-                        </div>
-                        <Button 
-                          type="button"
-                          variant="outline-secondary" 
-                          size="sm"
-                          className="rounded-pill px-3 py-1 fw-semibold"
-                          onClick={handleResetAppName}
-                          disabled={savingAppName}
-                          style={{ fontSize: '0.8rem' }}
-                        >
-                          Rétablir par défaut
-                        </Button>
+                        {appNameSuccess && (
+                          <Alert variant="success" className="py-2 px-3 mt-3 border-0 shadow-sm rounded-3 small fw-bold d-flex align-items-center gap-2">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                            <span>Le nom de l'application a été mis à jour avec succès sur tout le système !</span>
+                          </Alert>
+                        )}
                       </div>
-
-                      {appNameSuccess && (
-                        <Alert variant="success" className="py-2 px-3 mt-3 border-0 shadow-sm rounded-3 small fw-bold d-flex align-items-center gap-2">
-                          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                          <span>Le nom de l'application a été mis à jour avec succès sur tout le système !</span>
-                        </Alert>
-                      )}
-                    </div>
+                    )}
 
                     <div className="d-grid mt-5 pt-2">
                       <Button 
