@@ -62,7 +62,7 @@ export default function ManagerNav() {
                   `navbar-link${isActive ? ' active' : ''}`
                 }
               >
-                Imprimer PDF
+                Imprimer les feuilles d'absence
               </NavLink>
             </li>
           </ul>

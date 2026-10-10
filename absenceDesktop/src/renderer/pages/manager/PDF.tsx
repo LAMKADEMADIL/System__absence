@@ -195,7 +195,7 @@ export default function Home() {
           {/* Header Title */}
           <div className="d-flex justify-content-between align-items-center mb-4 mt-2">
             <div>
-               <h2 className="mb-1" style={{ fontWeight: '900', color: '#0f172a', letterSpacing: '-0.5px', fontSize: '2rem' }}>Impression des PDF</h2>
+               <h2 className="mb-1" style={{ fontWeight: '900', color: '#0f172a', letterSpacing: '-0.5px', fontSize: '2rem' }}>Imprimer les feuilles d'absence</h2>
                <p className="text-muted mb-0 fw-medium" style={{ fontSize: '1rem' }}>Générez et imprimez les feuilles d'absence hebdomadaires pour tous les groupes.</p>
             </div>
           </div>
@@ -252,7 +252,7 @@ export default function Home() {
                         {isLoading ? (
                           <><Spinner size="sm" /> Génération et impression en cours...</>
                         ) : (
-                          <><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Générer et Imprimer les PDF</>
+                          <><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg> Générer et Imprimer les feuilles d'absence</>
                         )}
                       </Button>
                       

@@ -73,7 +73,7 @@ export default function ManagerSidebar() {
               `nav-link d-flex align-items-center gap-3 py-3 px-3 rounded-4 ${isActive ? 'active-link-manager' : 'inactive-link'}`
             }
           >
-             <span>Imprimer PDF</span>
+             <span>Imprimer les feuilles d'absence</span>
           </NavLink>
         </Nav.Item>
 
