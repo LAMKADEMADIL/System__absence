@@ -74,7 +74,8 @@ function DirLayout({ children }: ManagerLayoutProps) {
         className="flex-grow-1" 
         style={{ 
           marginLeft: isCollapsed ? '0' : '260px',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          minWidth: 0
         }}
       >
         <main className="p-4 p-md-5">

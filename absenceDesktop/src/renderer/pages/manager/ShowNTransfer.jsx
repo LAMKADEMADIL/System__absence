@@ -49,6 +49,14 @@ export default function ShowNTransfer() {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const scrollToBottom = () => {
+    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+  };
+
   useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
@@ -772,6 +780,56 @@ export default function ShowNTransfer() {
           </Modal.Body>
         </Modal>
 
+        {/* Quick Navigation Scroll Buttons (Top & Bottom) */}
+        <div 
+          className="d-flex flex-column gap-2" 
+          style={{ 
+            position: 'fixed', 
+            bottom: '25px', 
+            right: '25px', 
+            zIndex: 1050 
+          }}
+        >
+          <button
+            type="button"
+            onClick={scrollToTop}
+            className="btn shadow-lg rounded-circle d-flex align-items-center justify-content-center p-0 scroll-nav-btn"
+            title="Aller en haut (الصعود للأعلى)"
+            style={{
+              width: '45px',
+              height: '45px',
+              backgroundColor: '#16a34a',
+              color: '#ffffff',
+              border: '2px solid #ffffff',
+              cursor: 'pointer',
+              transition: 'all 0.25s ease'
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={scrollToBottom}
+            className="btn shadow-lg rounded-circle d-flex align-items-center justify-content-center p-0 scroll-nav-btn"
+            title="Aller en bas (النزول للأسفل)"
+            style={{
+              width: '45px',
+              height: '45px',
+              backgroundColor: '#0f172a',
+              color: '#ffffff',
+              border: '2px solid #ffffff',
+              cursor: 'pointer',
+              transition: 'all 0.25s ease'
+            }}
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+        </div>
+
       </div>
       <style>{`
         .bg-dark { background-color: #1a2a3a !important; }
@@ -783,6 +841,13 @@ export default function ShowNTransfer() {
         .btn-hover-scale:hover { transform: scale(1.05); }
         .premium-input { border: 2px solid #e2e8f0; transition: all 0.2s ease; }
         .premium-input:focus { border-color: #16a34a; box-shadow: 0 0 0 0.2rem rgba(22, 163, 74, 0.15); }
+        .scroll-nav-btn:hover {
+          transform: scale(1.12);
+          box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25) !important;
+        }
+        .scroll-nav-btn:active {
+          transform: scale(0.95);
+        }
       `}</style>
     </ManagerLayout>
   );
