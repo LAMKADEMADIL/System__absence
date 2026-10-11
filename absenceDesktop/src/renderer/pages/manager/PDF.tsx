@@ -9,15 +9,85 @@ const dayOfWeek = today.getDay() ? today.getDay() - 1 : 6;
 const startOfWeek = new Date();
 startOfWeek.setDate(startOfWeek.getDate() - dayOfWeek);
 startOfWeek.setHours(0, 0, 0, 0);
-const endOfWeek = new Date();
-endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+// Week ends on Saturday (startOfWeek + 5 days)
+const endOfWeek = new Date(startOfWeek);
+endOfWeek.setDate(startOfWeek.getDate() + 5);
+endOfWeek.setHours(23, 59, 59, 999);
+
 const startDay = new Date(startOfWeek);
-startOfWeek.setDate(startDay.getDate());
 const dateToString = (d: Date) =>
   `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
 const startOfWeekString = dateToString(startOfWeek);
 const endOfWeekString = dateToString(endOfWeek);
 const electron = (window as any).electron;
+
+// Helper to determine Year number (1, 2, 3) from group
+const getYearFromGroup = (groupName: string, fallbackYear?: number): number => {
+  if (fallbackYear && (fallbackYear === 1 || fallbackYear === 2 || fallbackYear === 3)) {
+    return fallbackYear;
+  }
+  const clean = groupName.toUpperCase().replace(/\s+/g, '');
+  const match = clean.match(/([1-3])\d{2}/);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+  return 1;
+};
+
+// Official Filière Full Name mapping based on ISTA Tertiaire My Rachid catalog
+const getFiliereFullName = (groupName: string, groupYear?: number): string => {
+  if (!groupName) return '';
+  const clean = groupName.toUpperCase().replace(/[\s_-]+/g, '');
+  const year = getYearFromGroup(groupName, groupYear);
+  const yearTag = `(${year}A)`;
+
+  // 1. Développement Digital (Option Web Full Stack & Tronc Commun)
+  if (clean.includes('DEVOWFS') || clean.includes('DEVWFS') || clean.includes('OWFS')) {
+    return `Développement Digital option Web Full Stack ${yearTag}`;
+  }
+  if (clean.includes('DEV')) {
+    return `Développement Digital ${yearTag}`;
+  }
+
+  // 2. Gestion des Entreprises (Tronc Commun & Options)
+  if (clean.includes('GEOCF')) {
+    return `Gestion des Entreprises option Comptabilité et Finance ${yearTag}`;
+  }
+  if (clean.includes('GEOCM')) {
+    return `Gestion des Entreprises option Commerce et Marketing ${yearTag}`;
+  }
+  if (clean.includes('GEORH')) {
+    return `Gestion des Entreprises option Ressources Humaines ${yearTag}`;
+  }
+  if (clean.includes('GE')) {
+    return `Gestion des Entreprises ${yearTag}`;
+  }
+
+  // 3. Assistant Administratif (Tronc Commun & Options)
+  if (clean.includes('AAOCP')) {
+    return `Assistant Administratif option Comptabilité ${yearTag}`;
+  }
+  if (clean.includes('AAOC')) {
+    return `Assistant Administratif option Commerce ${yearTag}`;
+  }
+  if (clean.includes('AA')) {
+    return `Assistant Administratif ${yearTag}`;
+  }
+
+  // 4. Formations Qualifiantes & Brevet Professionnel
+  if (clean.includes('SME')) {
+    return `Spécialiste en Microsoft Excel ${yearTag}`;
+  }
+  if (clean.includes('SMW')) {
+    return `Spécialiste en Microsoft Word ${yearTag}`;
+  }
+  if (clean.includes('TCPS') || clean.includes('BP')) {
+    return `Tronc commun professionnel service ${yearTag}`;
+  }
+
+  return `${groupName} ${yearTag}`;
+};
 
 export default function Home() {
   const [groups, setGroups] = useState<Group[] | null>(null);
@@ -99,6 +169,17 @@ export default function Home() {
           signatures.push(sigUrl);
         }
 
+        // Group signatures by day (6 days, 1 cell per day spanning 4 columns, matching Assistants)
+        const dailySignatures = [...Array(6)].map((_, dayIndex) => {
+          const daySigs = signatures.slice(dayIndex * 4, (dayIndex + 1) * 4).filter(Boolean);
+          return Array.from(new Set(daySigs));
+        });
+
+        const filiereFullName = getFiliereFullName(group.name, group.year);
+        const formattedGroupName = group.name.includes(`${currentGroupYear}`)
+          ? group.name
+          : `${group.name} ${currentGroupYear}-${currentGroupYear + 1}`;
+
         const content = `
 <style>
   body{ font-family:arial; }
@@ -108,20 +189,20 @@ export default function Home() {
   table td{ width: 1ch; }
   .r90  { -ms-writing-mode: tb-lr; -webkit-writing-mode: vertical-lr; writing-mode: vertical-lr; white-space: nowrap; line-height:0; }
 </style>
-<div style='text-align:center;margin:0'>FEUILLE D'ABSENCE HEBDOMADAIRE</div>
-<img src='https://upload.wikimedia.org/wikipedia/commons/d/df/OFPPT_Logo.png' width=69 />
-<div style='text-align:center;margin:0 0 20px 0'>INSTITUT SPECIALISTE DE TECHNOLOGIE APPLIQUEE BEN M'SKIK CASABLANCA</div>
-<div style='display:flex;justify-content:space-between'>
-	<div><b>Fillére:</b> ${group.name}</div>
+<div style='text-align:center;margin:0;font-weight:bold;font-size:15px;'>FEUILLE D'ABSENCE HEBDOMADAIRE</div>
+<img src='https://upload.wikimedia.org/wikipedia/commons/d/df/OFPPT_Logo.png' width=69 style='margin-top:-10px;' />
+<div style='text-align:center;margin:-25px 0 20px 0;font-weight:bold;font-size:13px;'>INSTITUT SPECIALISE DE TECHNOLOGIE APPLIQUEE TERTIAIRE MY RACHID CASABLANCA</div>
+<div style='display:flex;justify-content:space-between;margin-bottom:8px;'>
+	<div><b>Filière :</b> ${filiereFullName}</div>
 	<div><b>Année de Formation :</b> ${currentGroupYear}-${currentGroupYear + 1}</div>
 </div>
-<div style='margin: 16px 0;display:flex;justify-content:space-between'>
-	<div><b>Groupe:</b> ${group.name}</div>
+<div style='margin-bottom: 16px;display:flex;justify-content:space-between'>
+	<div><b>Groupe :</b> ${formattedGroupName}</div>
 	<div><b>Semaine du</b> ${startOfWeekString} au ${endOfWeekString}</div>
 </div>
 <table>
 	<tr>
-		<th>N</th>
+		<th>N°</th>
 		<th>Nom & Prénom</th>
 		<th colspan=4>LUN</th>
 		<th colspan=4>MAR</th>
@@ -152,9 +233,10 @@ export default function Home() {
         ${internAbsences.map(isAbsent => `<td style='color:black'>${isAbsent ? 'A' : ''}</td>`).join('')}
       </tr>`;
   }).join('')}
-    <tr><td style='font-weight:bold;height:35px' colspan=2>Emargements des Formateurs</td>${signatures.map((s) => `<td colspan=1 style='position:relative;padding:0'>${s ? `<img src="${s}" style="width:32px;height:32px;object-fit:contain" />` : ''}</td>`).join('')}</tr>
+    <tr><td style='font-weight:bold;height:35px' colspan=2>Emargements des Formateurs</td>${dailySignatures.map((sigs) => `<td colspan=4 style='position:relative;padding:0;text-align:center;vertical-align:middle;height:35px;'>${sigs.length > 0 ? sigs.map((s) => `<img src="${s}" style="max-height:30px;max-width:45px;object-fit:contain;margin:0 2px;" />`).join('') : ''}</td>`).join('')}</tr>
     <tr><td style='font-weight:bold;height:25px' colspan=2>Assistants</td>${[...Array(6)].map(() => `<td colspan=4 />`).join('')}</tr>
 </table>
+<div style='margin-top: 15px; font-size: 13px; font-weight: normal; text-align: left;'>Surveillant Général:</div>
 `;
         pdfs.push({ content, name: group.name });
       });
