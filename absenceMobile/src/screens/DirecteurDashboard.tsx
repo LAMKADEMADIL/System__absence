@@ -11,14 +11,7 @@ import {
   serverTimestamp, setDoc, writeBatch, addDoc
 } from 'firebase/firestore';
 import { registerForPushNotificationsAsync } from '../utils/notifications';
-// import * as Notifications from 'expo-notifications';
-
-// Set up notification handler (MOCKED)
-const Notifications = {
-  setNotificationHandler: () => { },
-  scheduleNotificationAsync: async () => { },
-  AndroidNotificationPriority: { MAX: 2 }
-} as any;
+import * as Notifications from 'expo-notifications';
 
 export default function DirecteurDashboard({ navigation }: any) {
   const [groups, setGroups] = useState<any[]>([]);

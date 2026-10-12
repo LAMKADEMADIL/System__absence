@@ -3,7 +3,7 @@ import './src/i18n';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
-// import * as Notifications from 'expo-notifications';
+import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { registerForPushNotificationsAsync } from './src/utils/notifications';
 import { auth, db } from './src/firebase';
@@ -11,7 +11,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { doc, updateDoc } from 'firebase/firestore';
 
 // Configure how notifications appear when app is in foreground
-/* Notifications.setNotificationHandler({
+Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
     shouldPlaySound: true,
@@ -29,7 +29,7 @@ if (Platform.OS === 'android') {
     vibrationPattern: [0, 250, 250, 250],
     lightColor: '#FF231F7C',
   });
-} */
+}
 
 // Screens
 import SplashScreen from './src/screens/SplashScreen';
