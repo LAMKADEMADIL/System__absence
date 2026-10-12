@@ -89,6 +89,91 @@ const getFiliereFullName = (groupName: string, groupYear?: number): string => {
   return `${groupName} ${yearTag}`;
 };
 
+// Auto-crop empty whitespace around signature canvas, then auto-rotate vertical signatures to horizontal
+const trimSignature = (dataUrl: string): Promise<string> => {
+  return new Promise((resolve) => {
+    if (!dataUrl || !dataUrl.startsWith('data:image')) {
+      return resolve(dataUrl);
+    }
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth || img.width;
+        canvas.height = img.naturalHeight || img.height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return resolve(dataUrl);
+
+        ctx.drawImage(img, 0, 0);
+        const { width, height } = canvas;
+        const imgData = ctx.getImageData(0, 0, width, height);
+        const data = imgData.data;
+
+        let minX = width, minY = height, maxX = 0, maxY = 0;
+        let found = false;
+
+        for (let y = 0; y < height; y++) {
+          for (let x = 0; x < width; x++) {
+            const idx = (y * width + x) * 4;
+            const r = data[idx];
+            const g = data[idx + 1];
+            const b = data[idx + 2];
+            const a = data[idx + 3];
+
+            // Match non-transparent and non-white pixels
+            const isFilled = a > 20 && !(r > 240 && g > 240 && b > 240);
+            if (isFilled) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+              found = true;
+            }
+          }
+        }
+
+        if (!found || maxX <= minX || maxY <= minY) {
+          return resolve(dataUrl);
+        }
+
+        const pad = 4;
+        const cropX = Math.max(0, minX - pad);
+        const cropY = Math.max(0, minY - pad);
+        const cropW = Math.min(width - cropX, (maxX - minX) + pad * 2);
+        const cropH = Math.min(height - cropY, (maxY - minY) + pad * 2);
+
+        // Auto-rotate: if signature is horizontal (width > height * 1.1), rotate 90° → always vertical
+        const isHorizontal = cropW > cropH * 1.1;
+
+        const finalW = isHorizontal ? cropH : cropW;
+        const finalH = isHorizontal ? cropW : cropH;
+
+        const cropCanvas = document.createElement('canvas');
+        cropCanvas.width = finalW;
+        cropCanvas.height = finalH;
+        const cropCtx = cropCanvas.getContext('2d');
+        if (!cropCtx) return resolve(dataUrl);
+
+        if (isHorizontal) {
+          // Rotate 90° clockwise so horizontal signatures become vertical
+          cropCtx.translate(finalW / 2, finalH / 2);
+          cropCtx.rotate(Math.PI / 2);
+          cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, -cropW / 2, -cropH / 2, cropW, cropH);
+        } else {
+          cropCtx.drawImage(canvas, cropX, cropY, cropW, cropH, 0, 0, cropW, cropH);
+        }
+
+        resolve(cropCanvas.toDataURL('image/png'));
+      } catch (e) {
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+};
+
 export default function Home() {
   const [groups, setGroups] = useState<Group[] | null>(null);
   const [signaturesData, setSignaturesData] = useState<{ [group: string]: Signature[]; } | null>(null);
@@ -140,7 +225,16 @@ export default function Home() {
     if (groups) {
       setIsLoading(true);
       const pdfs: { content: string; name: string }[] = [];
-      groups.forEach((group) => {
+      const trimCache: { [url: string]: string } = {};
+      const getTrimmed = async (url: string) => {
+        if (!url) return '';
+        if (trimCache[url]) return trimCache[url];
+        const trimmed = await trimSignature(url);
+        trimCache[url] = trimmed;
+        return trimmed;
+      };
+
+      for (const group of groups) {
         const signatures: string[] = [];
         const currentGroupYear = today.getFullYear() - +(today.getMonth() < 7);
         
@@ -166,14 +260,38 @@ export default function Home() {
             );
             sigUrl = sig ? sig.signature : '';
           }
+          if (sigUrl) {
+            sigUrl = await getTrimmed(sigUrl);
+          }
           signatures.push(sigUrl);
         }
 
-        // Group signatures by day (6 days, 1 cell per day spanning 4 columns, matching Assistants)
-        const dailySignatures = [...Array(6)].map((_, dayIndex) => {
-          const daySigs = signatures.slice(dayIndex * 4, (dayIndex + 1) * 4).filter(Boolean);
-          return Array.from(new Set(daySigs));
-        });
+        // Build signature cells and assistant cells for all 6 days
+        // Each day is ONE single cell (colspan=4), with 4 equal 25% slots aligning under S1, S2, S3, S4 (under letter 'A')
+        let formateurCells = '';
+        let assistantCells = '';
+
+        for (let dayIndex = 0; dayIndex < 6; dayIndex++) {
+          const daySlots = signatures.slice(dayIndex * 4, (dayIndex + 1) * 4);
+          const s0 = daySlots[0] || '';
+          const s1 = daySlots[1] || '';
+          const s2 = daySlots[2] || '';
+          const s3 = daySlots[3] || '';
+
+          // If a formateur signed for morning (S1/S2), display the signature under both S1 and S2
+          const morningSig = s0 || s1;
+          const sig0 = s0 || morningSig;
+          const sig1 = s1 || morningSig;
+
+          // If a formateur signed for afternoon (S3/S4), display the signature under both S3 and S4
+          const afternoonSig = s2 || s3;
+          const sig2 = s2 || afternoonSig;
+          const sig3 = s3 || afternoonSig;
+
+          formateurCells += `<td colspan=4 style='position:relative;padding:0;height:80px;vertical-align:middle;'><div style='display:flex;width:100%;height:80px;align-items:stretch;'><div style='width:25%;height:80px;overflow:hidden;'>${sig0 ? `<img src="${sig0}" style="width:100%;height:100%;object-fit:contain;display:block;" />` : ''}</div><div style='width:25%;height:80px;overflow:hidden;'>${sig1 ? `<img src="${sig1}" style="width:100%;height:100%;object-fit:contain;display:block;" />` : ''}</div><div style='width:25%;height:80px;overflow:hidden;'>${sig2 ? `<img src="${sig2}" style="width:100%;height:100%;object-fit:contain;display:block;" />` : ''}</div><div style='width:25%;height:80px;overflow:hidden;'>${sig3 ? `<img src="${sig3}" style="width:100%;height:100%;object-fit:contain;display:block;" />` : ''}</div></div></td>`;
+
+          assistantCells += `<td colspan=4 style='height:80px;' />`;
+        }
 
         const filiereFullName = getFiliereFullName(group.name, group.year);
         const formattedGroupName = group.name.includes(`${currentGroupYear}`)
@@ -233,13 +351,19 @@ export default function Home() {
         ${internAbsences.map(isAbsent => `<td style='color:black'>${isAbsent ? 'A' : ''}</td>`).join('')}
       </tr>`;
   }).join('')}
-    <tr><td style='font-weight:bold;height:35px' colspan=2>Emargements des Formateurs</td>${dailySignatures.map((sigs) => `<td colspan=4 style='position:relative;padding:0;text-align:center;vertical-align:middle;height:35px;'>${sigs.length > 0 ? sigs.map((s) => `<img src="${s}" style="max-height:30px;max-width:45px;object-fit:contain;margin:0 2px;" />`).join('') : ''}</td>`).join('')}</tr>
-    <tr><td style='font-weight:bold;height:25px' colspan=2>Assistants</td>${[...Array(6)].map(() => `<td colspan=4 />`).join('')}</tr>
+    <tr>
+      <td style='font-weight:bold;height:68px;' colspan=2>Emargements des Formateurs</td>
+      ${formateurCells}
+    </tr>
+    <tr>
+      <td style='font-weight:bold;height:68px;' colspan=2>Assistants</td>
+      ${assistantCells}
+    </tr>
 </table>
 <div style='margin-top: 15px; font-size: 13px; font-weight: normal; text-align: left;'>Surveillant Général:</div>
 `;
         pdfs.push({ content, name: group.name });
-      });
+      }
 
       const folder = `${startOfWeekString.replaceAll('/', '-')} au ${endOfWeekString.replaceAll('/', '-')}`;
       

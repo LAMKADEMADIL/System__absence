@@ -18,9 +18,11 @@ import { registerForPushNotificationsAsync, sendPushNotification, notifyManagers
 import * as Clipboard from 'expo-clipboard';
 
 const signatureStyle = `
-  .m-signature-pad--footer { display: none; }
-  .m-signature-pad { border: 2px solid #E2E8F0; border-radius: 15px; height: 350px; }
-  body,html { height: 100%; width: 100%; margin: 0; padding: 0; }
+  .m-signature-pad--footer { display: none; margin: 0px; }
+  .m-signature-pad { border: none; box-shadow: none; width: 100%; height: 100%; }
+  .m-signature-pad--body { border: none; width: 100%; height: 100%; }
+  .m-signature-pad--body canvas { width: 100%; height: 100%; border-radius: 16px; }
+  body,html { width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden; background-color: #ffffff; }
 `;
 
 const groupScheduleItems = (items: any[]) => {
@@ -122,9 +124,15 @@ export default function FormateurDashboard({ navigation }: any) {
   const [selectedWeekTab, setSelectedWeekTab] = useState<'current' | 'next'>('current');
   const [lockedTodaySessions, setLockedTodaySessions] = useState<Record<string, number[]>>({});
   const [submittedTodayGroups, setSubmittedTodayGroups] = useState<Set<string>>(new Set());
+  const [submittedTodaySessions, setSubmittedTodaySessions] = useState<Record<string, number[]>>({});
+  const [groupSubmittedSessions, setGroupSubmittedSessions] = useState<number[]>([]);
   const [subGroupModalVisible, setSubGroupModalVisible] = useState(false);
   const [pendingScheduleItem, setPendingScheduleItem] = useState<any>(null);
   const [expandedSubGroups, setExpandedSubGroups] = useState<string[]>([]);
+  // Convocation feature: track students convoked to administration
+  const [convokedStudents, setConvokedStudents] = useState<Record<string, any>>({});
+  const [convokeModalVisible, setConvokeModalVisible] = useState(false);
+  const [selectedConvokedStudent, setSelectedConvokedStudent] = useState<any>(null);
 
   useEffect(() => {
     if (auth.currentUser) {
@@ -472,14 +480,27 @@ export default function FormateurDashboard({ navigation }: any) {
     );
 
     const unsubSubsToday = onSnapshot(qSubs, snap => {
-      const subs = new Set<string>();
+      const subsGroups = new Set<string>();
+      const subsSessions: Record<string, number[]> = {};
       snap.docs.forEach(doc => {
         const data = doc.data();
         if (data.groupId) {
-          subs.add(data.groupId);
+          subsGroups.add(data.groupId);
+          if (!subsSessions[data.groupId]) {
+            subsSessions[data.groupId] = [];
+          }
+          const sessList = Array.isArray(data.sessions) && data.sessions.length > 0 
+            ? data.sessions 
+            : [1, 2, 3, 4];
+          sessList.forEach((s: number) => {
+            if (!subsSessions[data.groupId].includes(s)) {
+              subsSessions[data.groupId].push(s);
+            }
+          });
         }
       });
-      setSubmittedTodayGroups(subs);
+      setSubmittedTodayGroups(subsGroups);
+      setSubmittedTodaySessions(subsSessions);
     }, err => {
       console.error("Error loading today's submissions:", err);
     });
@@ -670,14 +691,48 @@ export default function FormateurDashboard({ navigation }: any) {
     const unsubAbs = onSnapshot(query(collection(db, 'absences'), where('groupId', '==', selectedGroupId), where('day', '==', d), where('month', '==', m), where('year', '==', y)), snap => {
       const ma: any = {}; snap.docs.forEach(doc => { const data = doc.data(); const sId = data.studentId || data.stagiaireId; if(!ma[sId]) ma[sId] = []; ma[sId].push(data.session); }); setLocalAbsences(ma);
     });
-    const unsubSub = onSnapshot(doc(db, 'group_submissions', `SUB_${selectedGroupId}_${d}_${m}_${y}`), snap => {
-      if(snap.exists()) setSentGroups(new Set([selectedGroupId])); else setSentGroups(new Set());
+    // Listen to convocations for this group today
+    const unsubConvocations = onSnapshot(
+      query(collection(db, 'convocations'),
+        where('groupId', '==', selectedGroupId),
+        where('day', '==', d), where('month', '==', m), where('year', '==', y),
+        where('status', '==', 'active')
+      ),
+      snap => {
+        const conv: Record<string, any> = {};
+        snap.docs.forEach(docSnap => {
+          const data = docSnap.data();
+          conv[data.studentId] = { ...data, docId: docSnap.id };
+        });
+        setConvokedStudents(conv);
+      }
+    );
+    const qGroupSubs = query(
+      collection(db, 'group_submissions'),
+      where('groupId', '==', selectedGroupId),
+      where('day', '==', d),
+      where('month', '==', m),
+      where('year', '==', y)
+    );
+    const unsubSub = onSnapshot(qGroupSubs, snap => {
+      const sessList: number[] = [];
+      snap.docs.forEach(doc => {
+        const data = doc.data();
+        const sl = Array.isArray(data.sessions) && data.sessions.length > 0 ? data.sessions : [1, 2, 3, 4];
+        sl.forEach((s: number) => { if (!sessList.includes(s)) sessList.push(s); });
+      });
+      setGroupSubmittedSessions(sessList);
+      if (sessList.length > 0) {
+        setSentGroups(new Set([selectedGroupId]));
+      } else {
+        setSentGroups(new Set());
+      }
     });
-    return () => { unsubLocks(); unsubAbs(); unsubSub(); };
+    return () => { unsubLocks(); unsubAbs(); unsubConvocations(); unsubSub(); };
   }, [selectedGroupId]);
 
   const toggleAbsence = async (stId: string, sess: number) => {
-    if (lockedSessions[sess] || sentGroups.has(selectedGroupId)) return;
+    if (lockedSessions[sess] || groupSubmittedSessions.includes(sess)) return;
     const now = new Date(), d = now.getDate(), m = now.getMonth()+1, y = now.getFullYear(), id = `${stId}_S${sess}_${d}_${m}_${y}`;
     if (localAbsences[stId]?.includes(sess)) await deleteDoc(doc(db, 'absences', id));
     else await setDoc(doc(db, 'absences', id), { studentId: stId, session: sess, groupId: selectedGroupId, day: d, month: m, year: y, submitted: false });
@@ -685,15 +740,20 @@ export default function FormateurDashboard({ navigation }: any) {
 
   const handleSignature = async (sig: string) => {
     setSignatureModalVisible(false);
-    const batch = writeBatch(db), now = new Date(), d = now.getDate(), m = now.getMonth()+1, y = now.getFullYear();
-    selectedTeachingSessions.forEach(s => { 
-      if (!lockedSessions[s]) {
-        batch.set(doc(db, 'locked_sessions', `${selectedGroupId}_S${s}_${d}_${m}_${y}`), { 
-          groupId: selectedGroupId, session: s, day: d, month: m, year: y, signature: sig, createdAt: serverTimestamp() 
-        }); 
-      } 
-    });
-    await batch.commit();
+    try {
+      const batch = writeBatch(db), now = new Date(), d = now.getDate(), m = now.getMonth()+1, y = now.getFullYear();
+      selectedTeachingSessions.forEach(s => { 
+        if (!lockedSessions[s]) {
+          batch.set(doc(db, 'locked_sessions', `${selectedGroupId}_S${s}_${d}_${m}_${y}`), { 
+            groupId: selectedGroupId, session: s, day: d, month: m, year: y, signature: sig, createdAt: serverTimestamp() 
+          }); 
+        } 
+      });
+      await batch.commit();
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Erreur", "Impossible d'enregistrer la signature.");
+    }
   };
 
   const handleManualUnlock = async () => {
@@ -709,14 +769,27 @@ export default function FormateurDashboard({ navigation }: any) {
     try {
       const batch = writeBatch(db), now = new Date(), d = now.getDate(), m = now.getMonth()+1, y = now.getFullYear();
       const snap = await getDocs(query(collection(db, 'absences'), where('groupId', '==', selectedGroupId), where('day', '==', d), where('month', '==', m), where('year', '==', y)));
-      snap.docs.forEach(doc => batch.update(doc.ref, { submitted: true }));
-      batch.set(doc(db, 'group_submissions', `SUB_${selectedGroupId}_${d}_${m}_${y}`), { 
+      snap.docs.forEach(doc => {
+        const data = doc.data();
+        if (selectedTeachingSessions.includes(data.session)) {
+          batch.update(doc.ref, { submitted: true });
+        }
+      });
+      const subDocId = `SUB_${selectedGroupId}_S${selectedTeachingSessions.join('_')}_${d}_${m}_${y}`;
+      batch.set(doc(db, 'group_submissions', subDocId), { 
         groupId: selectedGroupId, groupName: selectedGroupName, formateurId: auth.currentUser?.uid, formateurName: currentUserData?.name,
         sessions: selectedTeachingSessions, day: d, month: m, year: y, submittedAt: serverTimestamp() 
       });
+      batch.set(doc(db, 'group_submissions', `SUB_${selectedGroupId}_${d}_${m}_${y}`), { 
+        groupId: selectedGroupId, groupName: selectedGroupName, formateurId: auth.currentUser?.uid, formateurName: currentUserData?.name,
+        sessions: selectedTeachingSessions, day: d, month: m, year: y, submittedAt: serverTimestamp() 
+      }, { merge: true });
       await batch.commit(); 
       showSuccess();
-    } catch (error) { Alert.alert("Erreur", "Impossible d'envoyer la liste."); }
+    } catch (error) { 
+      console.error("Error submitting final list:", error);
+      Alert.alert("Erreur", "Impossible d'envoyer la liste."); 
+    }
   };
 
   const showSuccess = () => {
@@ -750,6 +823,7 @@ export default function FormateurDashboard({ navigation }: any) {
   };
 
   const allSelectedLocked = selectedTeachingSessions.length > 0 && selectedTeachingSessions.every(s => lockedSessions[s]);
+  const isCurrentSessionSubmitted = selectedTeachingSessions.length > 0 && selectedTeachingSessions.every(s => groupSubmittedSessions.includes(s));
   const filiereList = ['AA', 'CMOSE', 'CMOSW', 'DEV', 'GE'];
   const groupList = groups.filter(g => (g.name || '').startsWith(selectedFiliere) && (selectedAnnee === '' || (g.name || '').includes(selectedAnnee + '0')));
 
@@ -834,9 +908,9 @@ export default function FormateurDashboard({ navigation }: any) {
       </View>
 
       <ScrollView 
-        contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
-        stickyHeaderIndices={isTakingAttendance ? [2] : []}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1E3A8A']} />}
       >
         <View style={styles.sectionHeader}>
@@ -864,10 +938,15 @@ export default function FormateurDashboard({ navigation }: any) {
                     return mg ? mg.id : name.trim();
                   });
                   
-                  const isSubmitted = expandedIds.length > 0 && expandedIds.every(id => submittedTodayGroups.has(id));
-                  const isPartiallySubmitted = !isSubmitted && expandedIds.some(id => submittedTodayGroups.has(id));
-                  
                   const sessionNums = item.sessionNums || [];
+                  const isSubmitted = sessionNums.length > 0 && expandedIds.length > 0 && expandedIds.every(id => {
+                    const ss = submittedTodaySessions[id] || [];
+                    return sessionNums.every((s: number) => ss.includes(s));
+                  });
+                  const isPartiallySubmitted = !isSubmitted && sessionNums.length > 0 && expandedIds.some(id => {
+                    const ss = submittedTodaySessions[id] || [];
+                    return sessionNums.some((s: number) => ss.includes(s));
+                  });
                   const isFullyLocked = sessionNums.length > 0 && expandedIds.every(id => {
                     const ls = lockedTodaySessions[id] || [];
                     return sessionNums.every((s: number) => ls.includes(s));
@@ -1021,10 +1100,27 @@ export default function FormateurDashboard({ navigation }: any) {
           <View style={[styles.listCard, { marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0, paddingTop: 10 }]}>
             {isLoading ? <ActivityIndicator size="large" color="#1E3A8A" /> : (
               <View style={styles.studentsList}>
-                {students.map((st, i) => (
-                  <View key={st.id} style={styles.studentRow}>
+                {students.map((st, i) => {
+                  const isConvoked = !!convokedStudents[st.id];
+                  return (
+                  <View key={st.id} style={[styles.studentRow, isConvoked && { backgroundColor: '#FFF7ED', borderRadius: 12, borderWidth: 1, borderColor: '#FED7AA' }]}>
                     <Text style={styles.rowIdx}>{i + 1}</Text>
-                    <View style={styles.nameContainer}><Text style={styles.lastName}>{st.lastName?.toUpperCase()}</Text><Text style={styles.firstName}>{st.firstName}</Text></View>
+                    <TouchableOpacity 
+                      style={styles.nameContainer} 
+                      onPress={() => {
+                        if (isConvoked) {
+                          setSelectedConvokedStudent(convokedStudents[st.id]);
+                          setConvokeModalVisible(true);
+                        }
+                      }}
+                      activeOpacity={isConvoked ? 0.7 : 1}
+                    >
+                      <Text style={[styles.lastName, isConvoked && { color: '#EA580C' }]}>{st.lastName?.toUpperCase()}</Text>
+                      <Text style={[styles.firstName, isConvoked && { color: '#F97316' }]}>{st.firstName}</Text>
+                      {isConvoked && (
+                        <Text style={{ fontSize: 9, color: '#EA580C', fontWeight: '800', marginTop: 1 }}>📢 CONVOQUÉ</Text>
+                      )}
+                    </TouchableOpacity>
                     <View style={styles.sessBtnContainer}>
                       {selectedTeachingSessions.map(s => {
                         const isA = localAbsences[st.id]?.includes(s), isL = lockedSessions[s];
@@ -1036,12 +1132,13 @@ export default function FormateurDashboard({ navigation }: any) {
                       })}
                     </View>
                   </View>
-                ))}
+                  );
+                })}
               </View>
             )}
 
             <View style={styles.actionContainer}>
-              {!sentGroups.has(selectedGroupId) ? (
+              {!isCurrentSessionSubmitted ? (
                 <>
                   {!allSelectedLocked ? (
                     <TouchableOpacity style={styles.signBtn} onPress={() => setSignatureModalVisible(true)}>
@@ -1086,6 +1183,98 @@ export default function FormateurDashboard({ navigation }: any) {
       </ScrollView>
 
       {/* MODALS */}
+
+      {/* Convocation Acknowledgement Modal */}
+      <Modal transparent visible={convokeModalVisible} animationType="fade">
+        <View style={styles.modalOverlay}>
+          <View style={styles.convokeModalCard}>
+            {/* Close Button Top Right */}
+            <TouchableOpacity 
+              onPress={() => setConvokeModalVisible(false)}
+              style={styles.convokeCloseBtn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="close" size={20} color="#64748B" />
+            </TouchableOpacity>
+
+            {/* Glowing Bell Icon */}
+            <View style={styles.convokeIconCircle}>
+              <View style={styles.convokeIconInner}>
+                <Ionicons name="notifications" size={32} color="#EA580C" />
+              </View>
+            </View>
+
+            {/* Badge Tag & Title */}
+            <View style={styles.convokePillBadge}>
+              <Text style={styles.convokePillText}>📢 CONVOCATION DIRECTION</Text>
+            </View>
+            <Text style={styles.convokeTitle}>Stagiaire Convoqué</Text>
+
+            {/* Student Info Card */}
+            <View style={styles.convokeStudentCard}>
+              <View style={styles.convokeAvatarCircle}>
+                <Ionicons name="person" size={20} color="#EA580C" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.convokeStudentLabel}>STAGIAIRE CONCERNÉ</Text>
+                <Text style={styles.convokeStudentName}>
+                  {selectedConvokedStudent?.studentName || '---'}
+                </Text>
+                {selectedConvokedStudent?.groupName ? (
+                  <Text style={styles.convokeGroupName}>
+                    Groupe : {selectedConvokedStudent.groupName}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+
+            {/* Explanation Message */}
+            <Text style={styles.convokeInfoMsg}>
+              Ce stagiaire est demandé auprès de la direction / l'administration. Confirmez-vous sa présence en classe ?
+            </Text>
+
+            {/* Action Buttons: Big Gorgeous Green Button & Dismiss */}
+            <View style={{ width: '100%', gap: 10 }}>
+              <TouchableOpacity 
+                style={styles.convokeConfirmBtn}
+                activeOpacity={0.85}
+                onPress={async () => {
+                  if (selectedConvokedStudent?.docId) {
+                    try {
+                      await updateDoc(doc(db, 'convocations', selectedConvokedStudent.docId), {
+                        status: 'acknowledged',
+                        acknowledgedAt: serverTimestamp()
+                      });
+                    } catch(e) { console.error(e); }
+                  }
+                  setConvokeModalVisible(false);
+                }}
+              >
+                <LinearGradient 
+                  colors={['#10B981', '#059669']} 
+                  start={{ x: 0, y: 0 }} 
+                  end={{ x: 1, y: 0 }}
+                  style={styles.convokeGradient}
+                >
+                  <View style={styles.convokeBtnIconWrapper}>
+                    <Ionicons name="checkmark-sharp" size={18} color="#059669" />
+                  </View>
+                  <Text style={styles.convokeConfirmText}>Stagiaire est venu</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => setConvokeModalVisible(false)} 
+                style={styles.convokeDismissBtn}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.convokeDismissText}>Fermer</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       <Modal transparent visible={subGroupModalVisible} animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
@@ -1099,7 +1288,8 @@ export default function FormateurDashboard({ navigation }: any) {
               {expandedSubGroups.map(gp => {
                 const mg = groups.find(g => g.name.trim().toUpperCase() === gp.trim().toUpperCase());
                 const gpId = mg ? mg.id : gp.trim();
-                const isSub = submittedTodayGroups.has(gpId);
+                const subSess = pendingScheduleItem?.sessionNums || [];
+                const isSub = subSess.length > 0 && subSess.every((s: number) => (submittedTodaySessions[gpId] || []).includes(s));
                 
                 return (
                   <TouchableOpacity 
@@ -1281,11 +1471,39 @@ export default function FormateurDashboard({ navigation }: any) {
             <Text style={{ textAlign: 'center', fontSize: 16, fontWeight: '800', color: '#64748B', marginBottom: 10, letterSpacing: 1 }}>SIGNATURE</Text>
             <View style={styles.sigFrameAlt}>
               {signatureModalVisible && (
-                <SignatureScreen ref={signatureRef} onOK={handleSignature} webStyle={signatureStyle} descriptionText="" clearText="Effacer" confirmText="Confirmer" style={{ zIndex: 1 }} />
+                <SignatureScreen 
+                  ref={signatureRef} 
+                  onOK={handleSignature} 
+                  onEmpty={() => Alert.alert("Signature vide", "Veuillez apposer votre signature sur l'écran avant de valider.")}
+                  onError={(err: any) => console.warn("Signature error:", err)}
+                  webStyle={signatureStyle} 
+                  descriptionText="" 
+                  clearText="Effacer" 
+                  confirmText="Confirmer" 
+                  autoClear={false}
+                  androidHardwareAccelerationDisabled={true}
+                  androidLayerType="software"
+                  webviewProps={{
+                    androidLayerType: "software",
+                    injectedJavaScript: `
+                      function fixPad() {
+                        if (typeof resizeCanvas === 'function') {
+                          resizeCanvas();
+                        }
+                      }
+                      window.addEventListener('resize', fixPad);
+                      setTimeout(fixPad, 100);
+                      setTimeout(fixPad, 300);
+                      setTimeout(fixPad, 600);
+                      true;
+                    `,
+                  }}
+                  style={{ flex: 1, borderRadius: 18 }} 
+                />
               )}
             </View>
             <View style={{ marginTop: 35, gap: 12 }}>
-              <TouchableOpacity style={styles.sigConfirmAlt} onPress={() => signatureRef.current.readSignature()}>
+              <TouchableOpacity style={styles.sigConfirmAlt} onPress={() => signatureRef.current?.readSignature()}>
                 <LinearGradient colors={['#1E3A8A', '#3B82F6']} style={styles.sigGradientBtn}>
                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                      <Ionicons name="checkmark-done" size={20} color="#fff" />
@@ -1293,7 +1511,7 @@ export default function FormateurDashboard({ navigation }: any) {
                    </View>
                 </LinearGradient>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.sigClearAlt, { flexDirection: 'row', gap: 8 }]} onPress={() => signatureRef.current.clearSignature()}>
+              <TouchableOpacity style={[styles.sigClearAlt, { flexDirection: 'row', gap: 8 }]} onPress={() => signatureRef.current?.clearSignature()}>
                 <Ionicons name="refresh-outline" size={18} color="#EF4444" />
                 <Text style={styles.sigClearTextAlt}>Effacer</Text>
               </TouchableOpacity>
@@ -1486,7 +1704,7 @@ const styles = StyleSheet.create({
   sigTitleAlt: { fontSize: 22, fontWeight: '900', color: '#1E3A8A' },
   sigSubTitle: { fontSize: 12, color: '#64748B', fontWeight: '600' },
   sigCloseBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
-  sigFrameAlt: { width: '100%', height: 350, backgroundColor: '#fff', borderRadius: 20, overflow: 'hidden', borderWidth: 1, borderColor: '#E2E8F0' },
+  sigFrameAlt: { width: '100%', height: 350, backgroundColor: '#fff', borderRadius: 20, borderWidth: 1.5, borderColor: '#CBD5E1' },
   sigConfirmAlt: { height: 60, borderRadius: 18, overflow: 'hidden' },
   sigGradientBtn: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   sigConfirmTextAlt: { color: '#fff', fontWeight: '900', fontSize: 16 },
@@ -1508,5 +1726,171 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#1E3A8A',
     marginLeft: 4,
+  },
+  convokeModalCard: {
+    backgroundColor: '#fff',
+    borderRadius: 30,
+    paddingHorizontal: 22,
+    paddingTop: 28,
+    paddingBottom: 22,
+    width: '88%',
+    maxWidth: 380,
+    alignItems: 'center',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 15,
+    position: 'relative',
+  },
+  convokeCloseBtn: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+  convokeIconCircle: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: '#FFEDD5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 3,
+    borderColor: '#FED7AA',
+  },
+  convokeIconInner: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#FFF7ED',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  convokePillBadge: {
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    marginBottom: 8,
+  },
+  convokePillText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#EA580C',
+    letterSpacing: 0.8,
+  },
+  convokeTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    color: '#0F172A',
+    marginBottom: 14,
+  },
+  convokeStudentCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+    borderLeftWidth: 4,
+    borderLeftColor: '#EA580C',
+    borderRadius: 16,
+    padding: 14,
+    width: '100%',
+    marginBottom: 12,
+  },
+  convokeAvatarCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFEDD5',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  convokeStudentLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#B45309',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  convokeStudentName: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#1E293B',
+  },
+  convokeGroupName: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 2,
+  },
+  convokeInfoMsg: {
+    fontSize: 13,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 19,
+    marginBottom: 18,
+    paddingHorizontal: 6,
+  },
+  convokeConfirmBtn: {
+    width: '100%',
+    borderRadius: 18,
+    overflow: 'hidden',
+    elevation: 6,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 10,
+  },
+  convokeGradient: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    gap: 10,
+  },
+  convokeBtnIconWrapper: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  convokeConfirmText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  convokeDismissBtn: {
+    width: '100%',
+    paddingVertical: 13,
+    borderRadius: 15,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  convokeDismissText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '700',
   },
 });

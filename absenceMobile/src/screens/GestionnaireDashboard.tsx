@@ -258,47 +258,129 @@ export default function GestionnaireDashboard({ navigation }: any) {
   const handleAccept = async (req: any) => {
     try {
       const batch = writeBatch(db);
-      const sessList = Array.isArray(req.sessions) ? req.sessions : [req.session];
+      const rawSessions = req.sessions || (req.session !== undefined ? [req.session] : []);
+      const sessList: number[] = Array.isArray(rawSessions) 
+        ? rawSessions.map((s: any) => Number(s)) 
+        : [Number(rawSessions)];
       
-      // 1. Delete lock sessions
-      for (const sNum of sessList) {
-        const lockId = `${req.groupId}_S${sNum}_${req.day}_${req.month}_${req.year}`;
-        batch.delete(doc(db, 'locked_sessions', lockId));
+      const targetGroupIds = [req.groupId, req.groupName]
+        .filter(Boolean)
+        .map((g: string) => g.trim().toUpperCase());
+
+      const matchesGroup = (gid?: string, gname?: string, docId?: string) => {
+        if (gid && targetGroupIds.includes(String(gid).trim().toUpperCase())) return true;
+        if (gname && targetGroupIds.includes(String(gname).trim().toUpperCase())) return true;
+        if (docId) {
+          const upperDocId = docId.toUpperCase();
+          for (const tg of targetGroupIds) {
+            if (upperDocId.includes(tg)) return true;
+          }
+        }
+        return false;
+      };
+
+      // 1. Delete matching locked_sessions (Mobile locks)
+      const qLocks = query(
+        collection(db, 'locked_sessions'),
+        where('day', '==', req.day),
+        where('month', '==', req.month),
+        where('year', '==', req.year)
+      );
+      const locksSnap = await getDocs(qLocks);
+      locksSnap.docs.forEach(d => {
+        const data = d.data();
+        if (matchesGroup(data.groupId, data.groupName, d.id)) {
+          if (sessList.length === 0 || sessList.includes(Number(data.session))) {
+            batch.delete(d.ref);
+          }
+        }
+      });
+
+      const checkSessions = sessList.length > 0 ? sessList : [1, 2, 3, 4];
+      for (const sNum of checkSessions) {
+        if (req.groupId) {
+          batch.delete(doc(db, 'locked_sessions', `${req.groupId}_S${sNum}_${req.day}_${req.month}_${req.year}`));
+        }
+        if (req.groupName) {
+          batch.delete(doc(db, 'locked_sessions', `${req.groupName}_S${sNum}_${req.day}_${req.month}_${req.year}`));
+        }
       }
 
-      // 2. Reset absences to submitted: false
-      const qAbs = query(collection(db, 'absences'), 
-        where('groupId', '==', req.groupId),
+      // 2. Delete ALL matching group_submissions for this group and day (Crucial for unlocking the formateur sheet)
+      const qSubs = query(
+        collection(db, 'group_submissions'),
+        where('day', '==', req.day),
+        where('month', '==', req.month),
+        where('year', '==', req.year)
+      );
+      const subsSnap = await getDocs(qSubs);
+      subsSnap.docs.forEach(d => {
+        const data = d.data();
+        if (matchesGroup(data.groupId, data.groupName, d.id)) {
+          batch.delete(d.ref);
+        }
+      });
+
+      if (req.groupId) {
+        batch.delete(doc(db, 'group_submissions', `SUB_${req.groupId}_${req.day}_${req.month}_${req.year}`));
+        batch.delete(doc(db, 'group_submissions', `SUB_${req.groupId}_S${checkSessions.join('_')}_${req.day}_${req.month}_${req.year}`));
+      }
+      if (req.groupName) {
+        batch.delete(doc(db, 'group_submissions', `SUB_${req.groupName}_${req.day}_${req.month}_${req.year}`));
+        batch.delete(doc(db, 'group_submissions', `SUB_${req.groupName}_S${checkSessions.join('_')}_${req.day}_${req.month}_${req.year}`));
+      }
+
+      // 3. Delete Desktop sessionLocks
+      const qDesktopLocks = query(
+        collection(db, 'sessionLocks'),
+        where('day', '==', req.day),
+        where('month', '==', req.month),
+        where('year', '==', req.year)
+      );
+      const dtSnap = await getDocs(qDesktopLocks);
+      dtSnap.docs.forEach(d => {
+        const data = d.data();
+        if (matchesGroup(data.groupId, data.groupName, d.id)) {
+          if (sessList.length === 0 || sessList.includes(Number(data.session))) {
+            batch.delete(d.ref);
+          }
+        }
+      });
+
+      // 4. Reset absences to submitted: false
+      const qAbs = query(
+        collection(db, 'absences'),
         where('day', '==', req.day),
         where('month', '==', req.month),
         where('year', '==', req.year)
       );
       const absSnap = await getDocs(qAbs);
       absSnap.docs.forEach(d => {
-        if (sessList.includes(d.data().session)) {
-          batch.update(d.ref, { submitted: false });
+        const data = d.data();
+        if (matchesGroup(data.groupId, data.groupName, d.id)) {
+          if (sessList.length === 0 || sessList.includes(Number(data.session))) {
+            batch.update(d.ref, { submitted: false });
+          }
         }
       });
 
-      // 3. Delete group submission document
-      const subId = `SUB_${req.groupId}_${req.day}_${req.month}_${req.year}`;
-      batch.delete(doc(db, 'group_submissions', subId));
-
-      // 4. Update request status
+      // 5. Update request status
       batch.update(doc(db, 'unlock_requests', req.id), { status: 'accepted', resolvedAt: serverTimestamp() });
       
       await batch.commit();
 
-      // 5. Create Notification for Formateur
-      await addDoc(collection(db, 'notifications'), {
-        targetId: req.formateurId,
-        message: `Votre demande de déverrouillage pour ${req.groupName} (${req.sessions?.join(', ') || req.session}) a été ACCEPTÉE.`,
-        timestamp: serverTimestamp(),
-        read: false,
-        type: 'unlock_accepted'
-      });
+      // 6. Create Notification for Formateur
+      if (req.formateurId) {
+        await addDoc(collection(db, 'notifications'), {
+          targetId: req.formateurId,
+          message: `Votre demande de déverrouillage pour ${req.groupName || req.groupId} a été ACCEPTÉE. Vous pouvez maintenant modifier l'appel.`,
+          timestamp: serverTimestamp(),
+          read: false,
+          type: 'unlock_accepted'
+        });
+      }
 
-      showSuccess("Demande acceptée et liste réinitialisée");
+      showSuccess("Demande acceptée et liste déverrouillée avec succès");
     } catch (e) { console.error(e); alert("Erreur lors de l'acceptation"); }
   };
 

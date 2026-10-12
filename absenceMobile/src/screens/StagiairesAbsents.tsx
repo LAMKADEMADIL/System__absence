@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { db } from '../firebase';
-import { collection, query, where, onSnapshot, doc, getDoc, getDocs, writeBatch, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, doc, getDoc, getDocs, writeBatch, serverTimestamp, updateDoc, setDoc, deleteDoc } from 'firebase/firestore';
 
 const expandGroupName = (groupName: string): string[] => {
   if (!groupName) return [];
@@ -63,11 +63,31 @@ export default function StagiairesAbsents({ navigation, route }: any) {
     type: 'info'
   });
   const [stagiairesNames, setStagiairesNames] = useState<Record<string, string>>({});
+  // Track which students are currently convoked (called to administration)
+  const [convokedStudents, setConvokedStudents] = useState<Set<string>>(new Set());
 
   const today = new Date();
   const day = today.getDate();
   const month = today.getMonth() + 1;
   const year = today.getFullYear();
+
+  // Listen to active convocations for this group
+  useEffect(() => {
+    if (!groupId) return;
+    const qConv = query(
+      collection(db, 'convocations'),
+      where('groupId', '==', groupId),
+      where('day', '==', day),
+      where('month', '==', month),
+      where('year', '==', year),
+      where('status', '==', 'active')
+    );
+    const unsub = onSnapshot(qConv, snap => {
+      const ids = new Set<string>(snap.docs.map(d => d.data().studentId));
+      setConvokedStudents(ids);
+    });
+    return () => unsub();
+  }, [groupId]);
 
   const formattedDate = today.toLocaleDateString('fr-FR', { 
     weekday: 'short', 
@@ -183,6 +203,52 @@ export default function StagiairesAbsents({ navigation, route }: any) {
       if (unsubAbs) unsubAbs();
     };
   }, [groupId]);
+
+  // Send convocation: write to Firestore 'convocations' collection
+  const handleConvoke = async (student: any) => {
+    const convId = `CONV_${student.id}_${day}_${month}_${year}`;
+    if (convokedStudents.has(student.id)) {
+      // Already convoked → cancel it
+      setConfirmModal({
+        visible: true,
+        title: 'Annuler la convocation',
+        msg: `Annuler la convocation de ${student.name} ?`,
+        type: 'info',
+        onConfirm: async () => {
+          setConfirmModal(prev => ({ ...prev, visible: false }));
+          try {
+            await deleteDoc(doc(db, 'convocations', convId));
+          } catch (e) { console.error(e); }
+        }
+      });
+    } else {
+      setConfirmModal({
+        visible: true,
+        title: 'Convoquer le stagiaire',
+        msg: `Convoquer ${student.name} ? L'enseignant sera notifié et le nom apparaîtra en orange dans sa liste.`,
+        type: 'danger',
+        onConfirm: async () => {
+          setConfirmModal(prev => ({ ...prev, visible: false }));
+          try {
+            await setDoc(doc(db, 'convocations', convId), {
+              studentId: student.id,
+              studentName: student.name,
+              groupId: groupId,
+              groupName: groupNameState,
+              day,
+              month,
+              year,
+              status: 'active',
+              createdAt: serverTimestamp()
+            });
+          } catch (e) { 
+            console.error(e);
+            Alert.alert('Erreur', 'Impossible d\'envoyer la convocation.');
+          }
+        }
+      });
+    }
+  };
 
   const handleAction = (studentId: string, action: 'validated' | 'rejected') => {
     setConfirmModal({
@@ -304,24 +370,36 @@ export default function StagiairesAbsents({ navigation, route }: any) {
           <ActivityIndicator color="#1E3A8A" style={{ marginTop: 40 }} />
         ) : (
           students.length > 0 ? (
-            students.map((s) => (
-              <View key={s.id} style={styles.card}>
+            students.map((s) => {
+              const isConvoked = convokedStudents.has(s.id);
+              return (
+              <View key={s.id} style={[styles.card, isConvoked && { borderWidth: 1.5, borderColor: '#F97316' }]}>
                 <View style={styles.cardLeft}>
-                  <View style={[styles.avatar, !s.isAbsent && { backgroundColor: '#F0FDF4' }]}>
-                    <Text style={[styles.avatarText, !s.isAbsent && { color: '#10B981' }]}>{(s.name || 'S').charAt(0)}</Text>
+                  <View style={[styles.avatar, !s.isAbsent && { backgroundColor: '#F0FDF4' }, isConvoked && { backgroundColor: '#FFF7ED' }]}>
+                    <Text style={[styles.avatarText, !s.isAbsent && { color: '#10B981' }, isConvoked && { color: '#EA580C' }]}>{(s.name || 'S').charAt(0)}</Text>
                   </View>
                   <View>
-                    <Text style={styles.name}>{s.name}</Text>
+                    <Text style={[styles.name, isConvoked && { color: '#EA580C' }]}>{s.name}</Text>
                     {s.isAbsent ? (
                       <Text style={styles.subText}>Absent - Session {s.sessions.join(', ')}</Text>
                     ) : (
                       <Text style={[styles.subText, { color: '#10B981' }]}>Présent</Text>
+                    )}
+                    {isConvoked && (
+                      <Text style={{ fontSize: 10, color: '#EA580C', fontWeight: '700', marginTop: 2 }}>📢 Convoqué à l'administration</Text>
                     )}
                   </View>
                 </View>
                 
                 {s.isAbsent ? (
                   <View style={styles.cardActions}>
+                    {/* Convocation button */}
+                    <TouchableOpacity 
+                      style={[styles.actionBtn, { backgroundColor: isConvoked ? '#EA580C' : '#F97316' }]} 
+                      onPress={() => handleConvoke(s)}
+                    >
+                      <Ionicons name={isConvoked ? 'notifications' : 'notifications-outline'} size={18} color="white" />
+                    </TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.actionBtn, styles.validateBtn]} 
                       onPress={() => handleAction(s.id, 'validated')}
@@ -342,7 +420,8 @@ export default function StagiairesAbsents({ navigation, route }: any) {
                   </View>
                 )}
               </View>
-            ))
+              );
+            })
           ) : (
             <View style={styles.emptyContainer}>
               <Ionicons name="checkmark-done-circle" size={80} color="#CBD5E1" />

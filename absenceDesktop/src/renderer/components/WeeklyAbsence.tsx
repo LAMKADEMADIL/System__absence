@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Modal, Button, Form, Spinner, Alert, Card, Table, Container, Badge } from 'react-bootstrap';
+import { collection, query, where, onSnapshot, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase/firebaseConfig';
 import { getGroupsWithStudentsAndAbsences, justifyAbsences } from '../firebase/firestoreService';
 
 type Absence = {
@@ -44,6 +46,8 @@ export default function WeeklyAbsence() {
   const [justificationText, setJustificationText] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [convokedStudentIds, setConvokedStudentIds] = useState<Set<string>>(new Set());
+  const [isConvokingId, setIsConvokingId] = useState<string | null>(null);
 
   const today = useMemo(() => new Date(), []);
   const startOfWeek = useMemo(() => {
@@ -118,6 +122,60 @@ export default function WeeklyAbsence() {
     );
     setInterns(processedInterns);
   }, [groups, start, end]);
+
+  // Real-time listener for today's active convocations
+  const curDay = today.getDate();
+  const curMonth = today.getMonth() + 1;
+  const curYear = today.getFullYear();
+
+  useEffect(() => {
+    const qConv = query(
+      collection(db, 'convocations'),
+      where('day', '==', curDay),
+      where('month', '==', curMonth),
+      where('year', '==', curYear),
+      where('status', '==', 'active')
+    );
+    const unsub = onSnapshot(qConv, (snapshot) => {
+      const ids = new Set<string>();
+      snapshot.docs.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (data.studentId) ids.add(String(data.studentId));
+      });
+      setConvokedStudentIds(ids);
+    });
+    return () => unsub();
+  }, [curDay, curMonth, curYear]);
+
+  // Toggle convocation for absent intern
+  const handleToggleConvoke = async (intern: InternWithMeta) => {
+    const sId = String(intern.id);
+    const convId = `CONV_${sId}_${curDay}_${curMonth}_${curYear}`;
+    const isConvoked = convokedStudentIds.has(sId);
+
+    try {
+      setIsConvokingId(sId);
+      if (isConvoked) {
+        await deleteDoc(doc(db, 'convocations', convId));
+      } else {
+        await setDoc(doc(db, 'convocations', convId), {
+          studentId: sId,
+          studentName: `${(intern.name.last || '').toUpperCase()} ${intern.name.first || ''}`.trim(),
+          groupId: intern.groupId || '',
+          groupName: intern.groupName || '',
+          day: curDay,
+          month: curMonth,
+          year: curYear,
+          status: 'active',
+          createdAt: serverTimestamp(),
+        });
+      }
+    } catch (err) {
+      console.error('Erreur lors de la convocation:', err);
+    } finally {
+      setIsConvokingId(null);
+    }
+  };
 
   const handleJustifyClick = (intern: InternWithMeta) => {
     setSelectedIntern(intern);
@@ -291,8 +349,33 @@ export default function WeeklyAbsence() {
                     </td>
                     <td className="py-3">
                       <div className="d-flex align-items-center gap-2" style={{ fontSize: '1rem' }}>
-                        <span style={{ fontWeight: '900', color: '#0f172a', letterSpacing: '0.5px' }}>{(intern.name.last || '').toUpperCase()}</span>
-                        <span style={{ fontWeight: '600', color: '#475569' }}>{intern.name.first}</span>
+                        <span style={{ 
+                          fontWeight: '900', 
+                          color: convokedStudentIds.has(String(intern.id)) ? '#ea580c' : '#0f172a', 
+                          letterSpacing: '0.5px' 
+                        }}>
+                          {(intern.name.last || '').toUpperCase()}
+                        </span>
+                        <span style={{ 
+                          fontWeight: '600', 
+                          color: convokedStudentIds.has(String(intern.id)) ? '#f97316' : '#475569' 
+                        }}>
+                          {intern.name.first}
+                        </span>
+                        {convokedStudentIds.has(String(intern.id)) && (
+                          <Badge 
+                            bg="warning" 
+                            className="ms-1 px-2 py-1 border" 
+                            style={{ 
+                              fontSize: '0.72rem', 
+                              backgroundColor: '#ffedd5', 
+                              color: '#c2410c',
+                              borderColor: '#fed7aa'
+                            }}
+                          >
+                            📢 Convoqué
+                          </Badge>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 text-center">
@@ -301,14 +384,38 @@ export default function WeeklyAbsence() {
                       </span>
                     </td>
                     <td className="py-3 text-center">
-                      <Button 
-                        variant="outline-success" 
-                        size="sm" 
-                        className="fw-bold px-4 rounded-pill justify-btn-mgr"
-                        onClick={() => handleJustifyClick(intern)}
-                      >
-                        Justifier
-                      </Button>
+                      <div className="d-flex justify-content-center align-items-center gap-2">
+                        <Button
+                          variant={convokedStudentIds.has(String(intern.id)) ? "warning" : "outline-warning"}
+                          size="sm"
+                          className="fw-bold px-3 rounded-pill d-inline-flex align-items-center gap-1 shadow-sm"
+                          style={{
+                            backgroundColor: convokedStudentIds.has(String(intern.id)) ? '#f97316' : '#fff',
+                            borderColor: '#f97316',
+                            color: convokedStudentIds.has(String(intern.id)) ? '#fff' : '#ea580c',
+                            transition: 'all 0.2s ease-in-out',
+                            fontSize: '0.85rem'
+                          }}
+                          disabled={isConvokingId === String(intern.id)}
+                          onClick={() => handleToggleConvoke(intern)}
+                          title={convokedStudentIds.has(String(intern.id)) ? "Annuler la convocation" : "Convoquer le stagiaire à la direction"}
+                        >
+                          {isConvokingId === String(intern.id) ? (
+                            <Spinner animation="border" size="sm" style={{ width: '12px', height: '12px' }} />
+                          ) : (
+                            <span>🔔</span>
+                          )}
+                          <span>{convokedStudentIds.has(String(intern.id)) ? 'Convoqué' : 'Convoquer'}</span>
+                        </Button>
+                        <Button 
+                          variant="outline-success" 
+                          size="sm" 
+                          className="fw-bold px-4 rounded-pill justify-btn-mgr"
+                          onClick={() => handleJustifyClick(intern)}
+                        >
+                          Justifier
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Alert, Animated, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { db } from '../firebase';
-import { collection, query, onSnapshot, doc, deleteDoc, writeBatch, where, getDocs } from 'firebase/firestore';
+import { collection, query, onSnapshot, doc, deleteDoc, writeBatch, where, getDocs, serverTimestamp, addDoc } from 'firebase/firestore';
 import { sendPushNotification } from '../utils/notifications';
 
 export default function DemandeDeverouillage({ navigation }: any) {
@@ -43,49 +43,157 @@ export default function DemandeDeverouillage({ navigation }: any) {
     try {
       if (action === 'accept') {
         const batch = writeBatch(db);
-        
-        // 1. Remove from sessionLocks (Desktop)
-        const qLock = query(
-          collection(db, 'sessionLocks'),
-          where('groupId', '==', requestData.groupId),
+        const rawSessions = requestData.sessions || (requestData.session !== undefined ? [requestData.session] : []);
+        const sessList: number[] = Array.isArray(rawSessions) 
+          ? rawSessions.map((s: any) => Number(s)) 
+          : [Number(rawSessions)];
+
+        const targetGroupIds = [requestData.groupId, requestData.groupName]
+          .filter(Boolean)
+          .map((g: string) => g.trim().toUpperCase());
+
+        const matchesGroup = (gid?: string, gname?: string, docId?: string) => {
+          if (gid && targetGroupIds.includes(String(gid).trim().toUpperCase())) return true;
+          if (gname && targetGroupIds.includes(String(gname).trim().toUpperCase())) return true;
+          if (docId) {
+            const upperDocId = docId.toUpperCase();
+            for (const tg of targetGroupIds) {
+              if (upperDocId.includes(tg)) return true;
+            }
+          }
+          return false;
+        };
+
+        // 1. Delete matching locked_sessions (Mobile locks)
+        const qLocks = query(
+          collection(db, 'locked_sessions'),
           where('day', '==', requestData.day),
           where('month', '==', requestData.month),
-          where('year', '==', requestData.year),
-          where('session', '==', requestData.session)
+          where('year', '==', requestData.year)
+        );
+        const locksSnap = await getDocs(qLocks);
+        locksSnap.docs.forEach(d => {
+          const data = d.data();
+          if (matchesGroup(data.groupId, data.groupName, d.id)) {
+            if (sessList.length === 0 || sessList.includes(Number(data.session))) {
+              batch.delete(d.ref);
+            }
+          }
+        });
+
+        const checkSessions = sessList.length > 0 ? sessList : [1, 2, 3, 4];
+        for (const sNum of checkSessions) {
+          if (requestData.groupId) {
+            batch.delete(doc(db, 'locked_sessions', `${requestData.groupId}_S${sNum}_${requestData.day}_${requestData.month}_${requestData.year}`));
+          }
+          if (requestData.groupName) {
+            batch.delete(doc(db, 'locked_sessions', `${requestData.groupName}_S${sNum}_${requestData.day}_${requestData.month}_${requestData.year}`));
+          }
+        }
+
+        // 2. Delete ALL matching group_submissions
+        const qSubs = query(
+          collection(db, 'group_submissions'),
+          where('day', '==', requestData.day),
+          where('month', '==', requestData.month),
+          where('year', '==', requestData.year)
+        );
+        const subsSnap = await getDocs(qSubs);
+        subsSnap.docs.forEach(d => {
+          const data = d.data();
+          if (matchesGroup(data.groupId, data.groupName, d.id)) {
+            batch.delete(d.ref);
+          }
+        });
+
+        if (requestData.groupId) {
+          batch.delete(doc(db, 'group_submissions', `SUB_${requestData.groupId}_${requestData.day}_${requestData.month}_${requestData.year}`));
+          batch.delete(doc(db, 'group_submissions', `SUB_${requestData.groupId}_S${checkSessions.join('_')}_${requestData.day}_${requestData.month}_${requestData.year}`));
+        }
+        if (requestData.groupName) {
+          batch.delete(doc(db, 'group_submissions', `SUB_${requestData.groupName}_${requestData.day}_${requestData.month}_${requestData.year}`));
+          batch.delete(doc(db, 'group_submissions', `SUB_${requestData.groupName}_S${checkSessions.join('_')}_${requestData.day}_${requestData.month}_${requestData.year}`));
+        }
+
+        // 3. Remove from sessionLocks (Desktop)
+        const qLock = query(
+          collection(db, 'sessionLocks'),
+          where('day', '==', requestData.day),
+          where('month', '==', requestData.month),
+          where('year', '==', requestData.year)
         );
         const lockSnap = await getDocs(qLock);
-        lockSnap.docs.forEach(d => batch.delete(d.ref));
+        lockSnap.docs.forEach(d => {
+          const data = d.data();
+          if (matchesGroup(data.groupId, data.groupName, d.id)) {
+            if (sessList.length === 0 || sessList.includes(Number(data.session))) {
+              batch.delete(d.ref);
+            }
+          }
+        });
 
-        // 2. Remove from locked_sessions (Mobile)
-        const mobileLockId = `${requestData.groupId}_S${requestData.session}_${requestData.day}_${requestData.month}_${requestData.year}`;
-        batch.delete(doc(db, 'locked_sessions', mobileLockId));
+        // 4. Reset absences to submitted: false
+        const qAbs = query(
+          collection(db, 'absences'),
+          where('day', '==', requestData.day),
+          where('month', '==', requestData.month),
+          where('year', '==', requestData.year)
+        );
+        const absSnap = await getDocs(qAbs);
+        absSnap.docs.forEach(d => {
+          const data = d.data();
+          if (matchesGroup(data.groupId, data.groupName, d.id)) {
+            if (sessList.length === 0 || sessList.includes(Number(data.session))) {
+              batch.update(d.ref, { submitted: false });
+            }
+          }
+        });
 
-        // 3. Delete the request
+        // 5. Delete or update the request
         batch.delete(doc(db, 'unlock_requests', requestId));
 
         await batch.commit();
         
         // Notify formateur
-        await sendPushNotification(
-          requestData.formateurId,
-          'Demande acceptée',
-          `Votre demande pour le groupe ${requestData.groupName} a été acceptée.`
-        );
+        if (requestData.formateurId) {
+          await addDoc(collection(db, 'notifications'), {
+            targetId: requestData.formateurId,
+            message: `Votre demande de déverrouillage pour ${requestData.groupName || requestData.groupId} a été ACCEPTÉE.`,
+            timestamp: serverTimestamp(),
+            read: false,
+            type: 'unlock_accepted'
+          });
+          await sendPushNotification(
+            requestData.formateurId,
+            'Demande acceptée',
+            `Votre demande pour le groupe ${requestData.groupName} a été acceptée.`
+          );
+        }
         
         Alert.alert('Succès', 'La session a été déverrouillée.');
       } else {
         await deleteDoc(doc(db, 'unlock_requests', requestId));
         
         // Notify formateur
-        await sendPushNotification(
-          requestData.formateurId,
-          'Demande rejetée',
-          `Votre demande pour le groupe ${requestData.groupName} a été rejetée.`
-        );
+        if (requestData.formateurId) {
+          await addDoc(collection(db, 'notifications'), {
+            targetId: requestData.formateurId,
+            message: `Votre demande de déverrouillage pour ${requestData.groupName} a été REFUSÉE.`,
+            timestamp: serverTimestamp(),
+            read: false,
+            type: 'unlock_rejected'
+          });
+          await sendPushNotification(
+            requestData.formateurId,
+            'Demande rejetée',
+            `Votre demande pour le groupe ${requestData.groupName} a été rejetée.`
+          );
+        }
         
         Alert.alert('Info', 'Demande rejetée.');
       }
     } catch (err) {
+      console.error(err);
       Alert.alert('Erreur', 'Action impossible.');
     }
   };
